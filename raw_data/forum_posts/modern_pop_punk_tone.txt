@@ -1,0 +1,27 @@
+[NEWBIE] How to make 2000's and modern pop punk sound using mesa dual rectifier
+As said in title. Recently borrowed a mesa dual rectifier multiwatt from a friend of mine. It's just hard to get the early 2000's "pop punk" tone like new found glory, blink 182 and some relatively modern pop punk tone like neckdeep. I'm using a mesa 4x12 slant cab. And boost with a maxon 808. As for guitar, I'm using Ibanez Rg470 without modded
+
+
+Anyone got tips?
+
+As someone who played in punk and hardcore bands in that era, I can tell you that just about everyone who could afford one was playing a Single/Dual/Triple Rectifier. In saying that, what a band would play live often isn’t/wasn’t what they’d record with and/or would be heavily processed. But I can assure this was THE amp of the style/era.
+
+In saying that, despite the music I play, I honestly never really got along with the Rectifier.
+
+Run the EQ all at noon. Remove a little bass to make room for your bass guitar's low end clarity as the style demands.
+
+Turn the gain knob till you get to where you want to be. Put a gate on too if you can and gradually edge up the aggression until you get to where you want to be.
+
+I think the biggest part of the thing you are going to need to change is the Dual Rec is going to want to put wayyy more bass into the deal than the bands you want to emulate ever used.
+
+The Dual Rectifier has an idiosyncratic EQ. The treble at 0 lets more mids through, the mids determine how “liquid” or “stiff” it feels to play through. You really need to dial it in by ear and not with your eyes. On a 2ch, I’d have it on the red channel set to vintage, keep the treble low, mids to taste and the bass just right for the cabinet, then use the channel 1 presence (the only one actually in the negative feedback) for master bright/smooth.
+
+I have no idea how this translates to a 3channel but I’m sure it’s possible and should be even easier to get a SoCal punk tone from, Blink etc. used this exact amp.
+
+The third channel is basically CH 2 on steroids. For a pop punk sounds I think Channel 2 would be best in Rectifier.
+
+About the EQ.. Mesa's EQ takes a bit to get used to. Reading the manual and probably watching a Youtube video on the topic is a good idea, as it can be a bit weird for someone used to "normal" amps.
+
+Anyway, start with gain and treble settings, as those are the two that mold the sound the most. Also keep in mind that both of these also affect your mids and bass. Then tune your mids, which obviously also affects your bass. Finish your tweaking with the bass knob. u/c0dyp3n6 (OP), keep this order in mind and play around with the settings (one channel start to finish at a time, don't overwhelm yourself by going around the 20 knobs at one), you'll find the sound you like. The user manual has some pretty alright sample settings.
+
+And like I said in another reply comment, try using your OD to tighten the bottom end: Volume at 10, Gain at 0 and tweak Tone to liking.

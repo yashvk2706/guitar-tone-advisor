@@ -1,0 +1,42 @@
+[QUESTION][NEWBIE] How do i get a Lo-Fi hip hop guitar sound?
+its one of my favourite sounds and for people who dont know it its this
+
+this sound is probably really easy to get but well i am a complete newbie and my guitar sounds different since i have no effects right now and have no clue how to get this sound
+
+That’s a clean tone with a lot of compression. This is a good video showing you how compressors work. Not every compressor will have all of those features.
+
+Also, add some reverb and/or delay to taste.
+
+also a big component of the lofi sound is the combination of a low pass filter (can used a cocked back wah pedal) with a tape degradation effect (often a really slow chorus to simulate warped tape). There are also some other effects that add in static noise, like a bit crusher.
+
+Oh, interesting. So something like the Strymon Deco? It does have a low pass filter buried in the secondary options (or I guess they call it a “high trim”). I don’t really know anything about lofi but I have that pedal and it’s pretty much always on.
+
+Depends entirely on your guitar/wiring. For example if you're on the bridge pickup of a regular strat, there's no tone knob - strats only come with tone controls for neck and middle pickup.
+
+EDIT: Lol how is this getting downvoted into the negative? You can't control the tone on the bridge pickup of a strat, and they're one of the most popular guitars out there, especially for beginners (which is the biggest user group for this sub) and especially for this type of music. If you don't believe me, read this, or look at this image, or look at this diagram.
+
+There's also a ton of mods you can do with a tone pot, including using all different capacitors to go so far as to only toll off the most chimey parts of the tone (aka a warmth control). If your guitar is second hand, it might not be a low pass filter at all (like one of the mexi strats I picked up at a guitar show last January).
+
+So I'm not saying the dude is wrong, just giving some extra context because it's not as cut and dry, and it's an interesting topic of conversation.
+
+Deco love. It's the best single pedal I have ever owned. It seems to do almost nothing and yet everything.
+
+Love my deco. I'd play around with setting it to 100% of the warped tape at 0 delay and then turn the wobble way up. Then play around with the wet dry knob until you get a nice sound
+
+
+Love the Deco. I could see using a Strat in the neck pickup with the Deco into a clean amp (Deco in the loop if you have one.) I suppose you could set the tape saturation to almost full to thicken up the tone a bit, and add some tape compression. Then mess around with the right side to get a little double track effect.
+
+
+Or Strymon El Capistan, or the new Julianna chorus by Wulrus. It now has a random chorus waveform, but also a drift function that slows and speeds up modulation within a set range that you adjust.
+
+EQ (remove some 1K and low end)
+
+Subtle pitch modulation
+
+Saturation in the DAW (tape saturation, whatever works)
+
+Compression
+
+Reverb
+
+You example sounds like classic fender dry clean tones on a neck humbucker pickup (I'm saying this because the sound is mellow and not single-coil glass/bell-like), (no verb, no delay, no warble as other people are recommending). What makes it sound lo-fi is the 7th chords and 9th/11th embellishments.For clean compressed tones checkout neural dsp archetype cory wong; atm it's the best for that kind of sound.

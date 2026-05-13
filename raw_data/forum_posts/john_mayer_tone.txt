@@ -1,0 +1,42 @@
+Any decent Strat with low output Alnico pickups and a good setup will get you in the ballpark of John Mayer and SRV. If you can find something with big/tall frets and a flatter fingerboard radius (like a Classic Player 50s Stratocaster) it'll be easier to set up and play than something with a more authentic vintage styled neck.
+
+Your amp already has everything else you need - a Blues Driver sim, a Tube Screamer sim, and a hidden Fender amp model (google "sneaky amps") that will do a pretty good job simulating their amps. If you PM me your email address and I'll even send you a couple good patches you can import into Boss Tone Studio to use when you get your new Strat.
+
+Edit:
+
+A semi-detailed overview of explaining the popular elements of Mayer's live rig, according to interviews and rig rundowns with him and his tech. I'm going to leave out some of the esoteric shit that doesn't matter / I don't care about.
+
+Electric Guitars
+
+Various Stratocasters (maple neck with rosewood slab fingerboard and vintage single-action truss rod, Dunlop 6105 frets, 9.5" fretboard radius, vintage tuners, alder body with thin poly finish, vintage large-block tremolo decked to body with 5 springs, 3 single coil pickups with AlNiCo V magnets measuring ~ 5.8k, 6.4k, and 7.7k from neck to bridge with 1954 magnet stagger on middle pickup and 1959 magnet stagger on neck and bridge pickups)
+
+Gibson "Eric Clapton Crossroads Replica 335" - he uses this for a few songs, so if you're ever listening to JM live and you think "how does he get such a fat tone from a Strat?" this might be your answer: it's not always a Strat.
+
+Pedals (mostly just used for lead work, rarely used for rhythm guitar)
+
+Ibanez Tube Screamer. Probably the pedal he's most associated with. Which version? Who cares? Their similarities greatly outweigh their differences. Any member of the TS family will do - he's even used a Fulltone Fulldrive and an old Keeley TS, I think. Set the tone control to unity brightness or a little darker than your unaffected signal, set the volume loud enough to boost your amp a bit and make it distort more, and treat the Gain knob like a "cheat" knob - keep it low unless you can't push your amp loud enough to make it distort on its own.
+
+Boss Blues Driver. Apparently he used this (or a Keeley-modded version of it) for some of his crunchier rhythm tones on Try! and boosted it with his TS for leads. Same setup philosophy as the TS: smooth tone setting, keep the gain low, and hit the amp hard with the output level.
+
+Marshall Blues Breaker Mark 1. Yet another mild overdrive, and probably the hardest of the bunch to track down... are y'all sensing a pattern here? Same setup as the TS again. Use it to push the amp, not to generate distortion on its own.
+
+Klon. Katana. Whatever. Any good low-gain overdrive with a decent amount of output is going to do the job.
+
+Amps
+
+John has a reputation for running lots of amps simultaneously. After examining amp settings in several rig rundown videos, I think it breaks down like this:
+
+[QUESTION] How to get john mayer tone?
+I have been playing guitar for two years, mainly hard rock. My current rig is a boss katana with an epiphone les paul and very few pedals. I have been getting into a lot of blues rock recently, stuff like hendrix, clapton, and of course john mayer. I want to be able to get a nice blues rock tone and I find mayers tone absolutely phenomenal, so I was just wondering if there was a certain kind of strat i should buy or any pedals I would need to get the right tone, that won't burn a hole in my wallet because I'm pretty poor haha . Any help would be appreciated, as I'm more of a player than a gear head. Thanks in advance!
+
+Dumble Steel String Slinger. An exceptionally loud clean amp, the SSS was basically just the clean channel out of an Overdrive Special, or in other words... a tweaked Fender clean with flexible tone controls. John sets it pretty dark and clean. When translated to Fender controls, it's brite off, almost zero treble, about 50% bass and mids, and Gain/Volume around 4.
+
+Two Rock signature. Pretty much just a tweaked Dumble clean channel again... aka another extra-fancy Fender clean. It's set sort of balanced and loooud. I don't know how clean the Two Rock stays when you get it loud, but I imagine this would be pushing close to its limits without breaking up. Translated to Fender controls, it's brite off, tone controls around noon, and Gain/Volume at 7.
+
+Fender Bandmaster. A 40w Fender amp that tended to distort a bit less than the Super or the Pro when you crank it up. In other words, yet another clean, Fender amp, but not as clean as the prior two. John sets this a bit brighter than the other two amps for a little more chime: brite off, 5 bass, 6 mids, 7 treble, and 6 Gain/Volume.
+
+In summary, three clean amps that focus on different parts of the audio spectrum and are all set with different levels of gain. One amp is focused on lows, one amp is focused on mids, and one amp is focused on highs. The "lows" amp will stay clean and punchy no matter how hard he boosts it with his overdrives, the middy one might start to growl and compress a bit, and the chimy one will probably break up a little. The extra volume with the OD engaged will also produce more feedback and help with the sustain on stage. Sometimes he runs them all simultaneously, sometimes he mutes one or two.
+
+tl;dr and also simplifying a little:
+
+Play a typical Strat into a clean Fender tube amp with the Brite off and every other knob around noonish. Hit it with a loud, low-gain overdrive pedal for solos. Make goofy faces as you perform.

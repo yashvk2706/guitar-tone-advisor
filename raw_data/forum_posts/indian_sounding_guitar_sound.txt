@@ -1,0 +1,27 @@
+Is there a name for this sort of vaguely Indian-sounding guitar sound?
+I'm going to admit a bit of ignorance here in terms of non-US/UK music here, but maybe this will expand my horizons a bit.
+
+There's a unique sort of guitar playing that I've seen compared to a sitar. It comes up a lot in songs by the band Pond:
+
+https://www.youtube.com/watch?v=KihGQiTAwiI
+
+The other sort of use of it I can think of is in the Oasis song "Hindu Times:"
+
+https://www.youtube.com/watch?v=Wp5zZ5cdu98
+
+Although apparently in that case it's ripped off from a Stereophonics song, which is totally surprising and definitely the first and only time Noel Gallagher stole a guitar part [/sarcasm].
+
+I like the sound quite a bit, but I have no idea how to find more of it. I imagine there are a fair few Indian rock bands that use the sound in the same way alt-country borrows from older American instrumentation, but I have no idea how to look that up. I'm still just baffled that I can say it "sounds like a sitar" even though it's a completely different style of music, because music is magical and baffling. Anyone know more out there?
+
+Are you talking about the main guitar riff in the Pond song? It's a basic drone technique on an electric guitar. You play two notes -- an open string and a fretted note. The open string provides the drone sound. The fretted note establishes a tonal center. The Pond song flirts with Phrygian dominant and gives it that middle east-ish sound. But you can drone any scale or mode. It's a very common technique.
+
+The Smashing Pumpkins made a career out of it.
+
+Which is the entire point of how the sitar is constructed (a bunch of strings provide the drone, and then you do a fretted melody on top of it).
+
+So yes, that sound is "sitar-like".
+
+I think you’re looking for ‘microtonal’ — notes that land between the European standard scales. The Pond song you shared sounds like it is generating the in-between notes with a slide guitar but there are of course lots of ways to do it. Maybe check out ‘Flying Microtonal Banana’ by KGLW? Not necessarily Indian-sounding but might be close to what you want.
+
+
+Looking at the credits for the songs, I’m just seeing that they’re playing with electric guitars. I think what you’re hearing is the guitar riffs emulating a typical Indian folk melodic structure. It’s definitely supposed to sound like a sitar, which is easy to do since the sitar and guitar are both similar string instruments. I think lots of psych-rocky songs draw from Indian music.

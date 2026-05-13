@@ -1,0 +1,72 @@
+[Question] Chasing BB King's tone
+Hey! I've been studying some of B.B. King's solos (mostly from Deuces Wild), and I'm having a really difficult time getting a tone similar to his, as it always seems there's something missing, and I can never get all of the frequency bands on the right spot at the same time.
+
+My guitar is an Epiphone 335, which I guess is already a good start. I'm playing with an overdrive pedal with the gain set really low (just for some mid boost and a bit of break up on the loudest notes) through a clean amp. To be honest I quite like the tone that I'm getting, but it's not quite there yet, and I was wondering if someone could point me the right direction to achieving his rounder/warmer sound.
+
+So...unlike people's recommendations, BB King actually didn't use tube amps. He used Lab Series L5s, which were among the first really good solid state amps.
+
+Proof:
+
+https://www.youtube.com/watch?v=FqSRe4X23nI
+
+https://www.youtube.com/watch?v=EoKveGgMlF0
+
+He also just plugged in with a cable and used the amp for everything.
+
+They sound a lot like vintage fenders with reverb, think blackface twins. Except they have a good master volume that lets you overdrive the preamp if you want to.
+
+They were a little different from most guitar amps in 3 important ways:
+
+They had an optical compressor in the output section. It was a really simple 1-knob deal, but it's partially responsible for the fatness and sustain without significant distortion. You can replicate it with an optical compressor pedal in the effects loop of most any relatively clean amp.
+
+The midrange control is semi-parametric - it lets you choose the center frequency of the midrange knob. It doesn't do a ton, but what it does is very specific. You can kind of get close to what it does with almost any EQ pedal (like a GE-7) and try boosting/cutting one band at a time. There are also parametric and semi-parametric EQ pedals around that should be able to get closer.
+
+The multifilter is just weird. It's a comb-filtering thing, and there aren't enough details about exactly what it does to easily replicate it. Fortunately, it mostly affects the sound by selectively boosting highs (> 1k) and BB's tone was always a little warm...so he probably didn't use it all that much. You can play with the uppermost bands on something like an MXR EQ Ten and see if it helps. Unless I'm mistaken, this was also pretty late in the signal chain.
+
+So...I'd plug direct into a mostly clean MV amp with an EQ and an optical compressor in the effects loop. If you can't get the overdrive you want, something fender-y in front can probably get there. I'd think about a blues driver (which is based on a Fender tone stack with the bass cranked, then the low end is filtered out later) or some slightly scooped OD set for really light breakup.
+
+You can replicate most of it with a Katana pretty easily, but you have to use tone studio to do it. Basically, you want to pick the right chain so that things happen in order (the important part is mod > amp EQ > FX) with mod set to parametric EQ and FX set to compressor. Leave it on the clean setting, and balance your gain and volumes and the details of those 2 effects to get close, then add just a little reverb to taste.
+
+You can also probably pick up an L5 for relatively cheap (a few hundred depending on condition), but they're hard to find. They haven't been made in decades.
+
+Another interesting aspect of BB's sound was the Varitone (? or variac?) switch on his guitar. I read a few articles about it and he used position #2 on that switch, which seems to cut the 1875khz band by 5db. So if you can model that with an eq, that will also get you close.
+
+Oh, thank you! I have been resisting against getting an EQ pedal, but I feel like this may become unavoidable in the next few months.
+
+
+Hey, thanks a lot! I don't have a Katana, but I have been using a Blackstar ID:Core, so I guess I can try to make it work with it as well.
+
+
+Turn the amp up and make it a little dirty. Then control the volume with the guitar. Also, roll your tone knobs back a little. I heard Mr. King turned his amp all the way up and controlled everything with his volume and tone knobs.
+
+Hi, I'm a big BB King fan myself. I use the following set-up.
+
+Epiphone Dot > Harley Benton CS-100 compressor > Harley Benton American Sound drive pedal (analog fender amp sim) > Vox DA5 on 'Clean 1' channel.
+
+Dot - middle position
+
+American Sound: Voice on max, Lows and Mids at 11 o'clock, Treble at 1 o'clock.
+
+Level near max, Drive near min.
+
+CS-100: Attack and Sustain at 9 o'clock, level and tone at 12 o'clock.
+
+Vox DA5: The 'Clean 1' channel doesn't overdrive on its own; I just keep the tone at 12 o'clock, add reverb, and adjust the Gain and Master at whatever needed for volume.
+
+I've found the Dot plenty warm. The tricky thing for me was getting the right 'bite' and sustain while staying clean. This was a matter of balancing the Drive pedal with the compressor. The 'Clean 1' amp model is doesn't really add any 'colour'.
+
+This has worked pretty well for me. I don't consider myself to have a great ear for this sort of thing so YMMV.
+
+The CS-100, and American Sound are pretty cheap though, so may be worth trying.
+
+EDIT:
+
+Just want to leave this here as its relevant to the HB American Sound
+
+https://www.reddit.com/r/guitarpedals/comments/mr7ghb/npd_seriously_go_buy_an_american_sound_after/
+
+There's a bit more info here regarding the Voice knob:
+
+https://imgur.com/gallery/VHeSrL0
+
+In brief, below 12 o'clock is black and silver face amps, 12o'clock is blonde, after 12 is Tweed, and on max is lead boosted which is what I used for my BB King tone.

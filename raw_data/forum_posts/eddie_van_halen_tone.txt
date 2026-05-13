@@ -1,0 +1,34 @@
+How can i get Eddie Van Halen's tone?
+I've been trying to get his tone for a long time but i can't get close to it really.
+
+I have a Esp ltd Ec-256 and a Fender Mustang LT25
+
+Early sound you need a 100W superlead with greenbacks, plus a variac. Dime the amp and set variac to 89V for VH1. For each album dial back the gain a little more and more.
+
+Guitar wise you need a Seymour Duncan 78 pickup. 
+
+Once you get to around Fair Warning through OU812 it's more mixed. Heavy stuff has a hotter pickup (EVH Frankie pickup is great and better than the Wolfgang pickup imo). Takes some time to learn if he's using his Marshall or his SLO, depends on song/album. 
+
+Later years you keep the hot pickup and keep the SLO or get a Peavy 6505 (original 5150). He only used the 5150 from Balance onward. 
+
+Some of his lighter tunes you need EMGa for. That's what he has on the transtrem. This is like Summer Nights or Pleasure Dome.
+
+And most importantly, and this one is non-negotiable. If you want EVH tone you need to literally be Edward Van Halen
+
+MXR EVH5150 Overdrive pedal + any digital delay
+
+Or
+
+Or BOSS SD1 + MXR Phase 90 + BOSS SDE Delay
+
+Or
+
+Soldano SLO pedal and any digital delay pedal
+
+will give you 85% of his Brown Sound
+
+it's a pretty bright tone with a spongy feel. For the first two records a lot of reverb and some delay over to one side is crucial.
+
+but a lot of the tone comes from your technique; lots of hammer ons and pull offs, almost always with a small amount of palm muting, picking quite aggressively and hardly ever playing straight there's always this shuffle feel even in the fastest runs
+
+Today’s modeling amps are insane. Idk if it’s in your budget or if you want to look for a used one, but I use a Fractal AX8. It’s an outdated one now because the technology moves so fast. The “brown sound” presets that came with it were pretty good. In the ballpark of Eddie tone. Not amazing though. Then I bought and downloaded a patch called Moke’s Eruption, and Jeeeeeeez!!!! I definitely don’t have Eddie’s hands but it’s unmistakable that it’s Eddie’s tone. I’m sure there are other downloads out there that are as good. If you can pony up for something like fractal or similar rigs you can get basically any sound you want
