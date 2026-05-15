@@ -1,0 +1,115 @@
+# Roadmap: Guitar Tone Advisor
+
+**Created:** 2026-05-15
+**Last updated:** 2026-05-15 (EVAL-01 moved to Phase 1 to lock the golden eval set before any retrieval tuning)
+**Granularity:** Standard
+**Project mode:** Vertical MVP — each phase ships an end-to-end working slice (or the smallest verifiable deliverable thereof)
+**Coverage:** 33/33 v1 requirements mapped (100%)
+
+## Phases
+
+- [ ] **Phase 1: Schema, Forum Ingestion & Golden Eval Set** — Migrate Postgres + pgvector, build forum-only CLI ingestion pipeline, and author the held-out golden eval set before any retrieval tuning
+- [ ] **Phase 2: Retrieval Layer & Gear Aliases** — Wire HNSW cosine retrieval through the Embedder Protocol with bidirectional gear-alias query expansion
+- [ ] **Phase 3: Grounded Generation & Minimal Chat UI** — End-to-end SSE-streamed answers with inline `[S{n}]` citations rendered in a minimal Next.js chat
+- [ ] **Phase 4: UI Polish — Knobs, Markdown, Follow-ups** — Add rotary-knob settings, Markdown rendering, follow-up buttons, copy-to-clipboard, loading states, session history
+- [ ] **Phase 5: Evaluation Harness & Grounding Quality** — Score against the existing golden eval set (recall@K / MRR), empty-context refusal smoke test, RAGAS faithfulness
+
+## Phase Details
+
+### Phase 1: Schema, Forum Ingestion & Golden Eval Set
+**Goal:** A guitarist can run one CLI command and have every forum post in `raw_data/forum_posts/` become a chunked, embedded, idempotently-stored row in Postgres ready for retrieval — and a held-out golden eval set exists on disk before anyone tunes a retrieval parameter.
+**Mode:** mvp
+**Depends on:** Nothing (first phase)
+**Requirements:** INGEST-01, INGEST-02, INGEST-03, INGEST-04, INGEST-05, INGEST-06, EVAL-01
+**Success Criteria** (what must be TRUE):
+  1. Running `python -m app.ingest.pipeline` against `raw_data/forum_posts/` populates the `chunks` table with one row per chunk, each row carrying source_type/source_name/chunk_index/content_hash metadata
+  2. Every stored chunk has a `vector(1536)` embedding generated via the model named in `EMBEDDING_MODEL` (default `text-embedding-3-small`)
+  3. The `chunks` table has a working HNSW index on the embedding column using `vector_cosine_ops` (verified by `EXPLAIN ANALYZE` showing index scan, not seq scan)
+  4. Re-running the ingestion CLI on unchanged input re-embeds zero chunks (idempotency via content-hash dedup)
+  5. `eval/golden_set.jsonl` contains ≥20 `(query, expected_chunk_ids, expected_themes)` tuples derived from the 10 forum-post topics, with a held-out subset committed *before* any retrieval tuning has been performed (timestamp and held-out manifest recorded in `eval/HELD_OUT.md`)
+**Plans:**
+  - Plan 1: Postgres + pgvector schema migration (documents, chunks, ingest_runs tables; HNSW index; pg_trgm pre-installed for Phase 3 hybrid headroom)
+  - Plan 2: Forum-post loader and chunker (txt reader, quoted-reply stripper, ~300-800 token paragraph-packing)
+  - Plan 3: Embedder Protocol + OpenAI implementation (embed_documents/embed_query split, factory dispatch on EMBEDDING_MODEL)
+  - Plan 4: Writer with content-hash dedup (psycopg3 upsert, ingest_runs row per CLI invocation, `--full-rebuild` escape hatch)
+  - Plan 5: Golden eval set authoring [EVAL-01] (final plan of Phase 1; ≥20 query/expected-chunk/expected-theme tuples against the ingested forum chunks; held-out split locked and timestamped before Phase 2 retrieval tuning begins; JSONL schema documented; `eval/HELD_OUT.md` records which queries are held-out)
+
+### Phase 2: Retrieval Layer & Gear Aliases
+**Goal:** A guitarist's free-text tone query (with gear shortforms like "TS9" or "JCM800") returns the top-K most relevant forum chunks with full source metadata, expanded against a curated gear-alias map before embedding.
+**Mode:** mvp
+**Depends on:** Phase 1 (chunks must exist in the store and the golden eval set must be locked before tuning K, chunking, or expansion)
+**Requirements:** INGEST-07, RETR-01, RETR-02, RETR-03
+**Success Criteria** (what must be TRUE):
+  1. A `gear_aliases.json` file exists mapping at least the gear referenced in the existing forum corpus (TS9, JCM800, EVH, Strat, etc.) bidirectionally to canonical names
+  2. A query containing a gear shortform retrieves the same top chunks as the same query with the canonical name (verified by spot check on at least 3 alias pairs)
+  3. A retrieval call returns the top-K=8 chunks ranked by HNSW cosine similarity, each chunk dict including source_type, source_name, chunk_index/page reference, and raw text
+  4. Retrieval-layer unit test asserts `register_vector(conn)` is invoked once per pool connection and queries use the `<=>` cosine operator
+**Plans:**
+  - Plan 1: `gear_aliases.json` authoring + bidirectional expansion module (alias → canonical and canonical → alias both injected into pre-embedding query string)
+  - Plan 2: Dense retrieval function (HNSW cosine search, K=8, filters by embedding_model defensively)
+  - Plan 3: Metadata-preserving result envelope (chunk text + source fields surfaced to the generation layer; `EXPLAIN ANALYZE` logged in dev)
+
+### Phase 3: Grounded Generation & Minimal Chat UI
+**Goal:** A guitarist opens the web app, types their gear + a target tone, and watches a streamed, cited recommendation appear — with `[S{n}]` markers that open a drawer showing the actual forum-post text, and a refusal-with-reason whenever the corpus is silent.
+**Mode:** mvp
+**Depends on:** Phase 2
+**Requirements:** GEN-01, GEN-02, GEN-03, GEN-04, GEN-05, GEN-06, GEN-07, CHAT-01, CHAT-02, CHAT-03, CITE-01, CITE-02, CITE-03
+**Success Criteria** (what must be TRUE):
+  1. Asking "What amp settings did BB King use?" through the chat UI yields a streamed answer with at least one `[S{n}]` citation; clicking the citation opens a drawer showing the actual forum-post chunk text and a source-type label (`[Forum]`)
+  2. The same query asked against an artificially empty retrieval result produces a refusal with a reason (e.g., "I don't have material on …") rather than a fabricated answer
+  3. The answer contains concrete knob positions on a 0-10 scale and/or a signal-chain order when the cited chunks contain them; gear-translation phrasing appears when the user's described gear differs from the cited gear
+  4. A "New chat" button clears the in-process session memory; subsequent messages have no recollection of prior turns
+  5. Each answer renders a corpus-coverage indicator naming how many distinct sources support it (e.g., "3 sources agree")
+**Plans:**
+  - Plan 1: Anthropic generation module (system prompt with refusal example, `<sources>` XML injection, `[S{n}]` enforcement, temperature 0.0-0.2)
+  - Plan 2: FastAPI SSE chat endpoint (`POST /chat`, sse-starlette token stream, out-of-band `event: citations` payload, `GET /sources/{chunk_id}` for drawer hydration)
+  - Plan 3: In-process session memory (dict keyed by session_id, sliding-window turn drop, gear context in first user message as `<gear>` block)
+  - Plan 4: Minimal Next.js chat UI (input box, message list, streaming token render, clickable citation pill → drawer with source-type label and coverage indicator, "New chat" button)
+**UI hint**: yes
+
+### Phase 4: UI Polish — Knobs, Markdown, Follow-ups
+**Goal:** The chat UI graduates from minimal-but-functional to actually-pleasant: Markdown formatting, visual rotary-knob renderings of knob settings, scrollable session history, one-click copy of the recommendation block, loading-state messaging, and three suggested follow-up action buttons under every answer.
+**Mode:** mvp
+**Depends on:** Phase 3
+**Requirements:** CHAT-04, UI-01, UI-02, UI-03, UI-04, UI-05
+**Success Criteria** (what must be TRUE):
+  1. Markdown in the model's output (bold, bulleted lists, fenced code) renders correctly in the browser
+  2. When the answer contains knob settings (e.g., "Bass=7, Mid=4, Treble=6"), each setting renders as a visual rotary-knob component turned to the correct position with the numeric value labeled beneath
+  3. The full session's prior turns remain visible and scrollable above the current input
+  4. A single "Copy" button on each recommendation block copies the amp/pedal settings to the system clipboard
+  5. While a response is generating, the UI shows a labeled progress indicator that transitions ("Searching corpus..." → "Drafting...")
+  6. Three suggested follow-up buttons ("Cleaner?", "Live setting?", "Budget version?") appear under each answer and, when clicked, submit the corresponding follow-up turn
+**Plans:**
+  - Plan 1: Markdown renderer + recommendation-block isolation (react-markdown or equivalent; identify the settings section for the copy button)
+  - Plan 2: Rotary-knob component (SVG knob, 0-10 scale, value label, parser that extracts `Knob=N` patterns from the answer)
+  - Plan 3: Conversation surface polish (scrollable history pane, copy-to-clipboard handler, loading-state state machine wired to the SSE event lifecycle)
+  - Plan 4: Follow-up button rail (three fixed prompts under each assistant message, submitting the canonical follow-up text on click)
+**UI hint**: yes
+
+### Phase 5: Evaluation Harness & Grounding Quality
+**Goal:** Every future retrieval or prompt change can be judged against the held-out golden eval set authored in Phase 1 and a faithfulness score — no more vibes-based tuning, and the empty-context refusal contract is enforced by an automated smoke test.
+**Mode:** mvp
+**Depends on:** Phase 1 (golden eval set must already exist on disk); Phase 2 (retrieval must exist before recall@K is meaningful); Phase 3 (generation must exist before refusal/faithfulness can be measured)
+**Requirements:** EVAL-02, EVAL-03, EVAL-04
+**Success Criteria** (what must be TRUE):
+  1. Running `python -m app.eval.retrieval` loads the existing `eval/golden_set.jsonl` (authored in Phase 1), prints recall@K and MRR, and appends the numbers to `eval/runs.jsonl` after each retrieval configuration change
+  2. An automated smoke test passes when, given `retrieved_chunks=[]`, the generation layer returns a refusal (no fabricated knob settings, no hallucinated gear names)
+  3. Running `python -m app.eval.ragas` on a sample of generated answers prints a faithfulness score and logs per-claim support evidence
+**Plans:**
+  - Plan 1: Retrieval scorer against the existing golden eval set [EVAL-02] (loads `eval/golden_set.jsonl` from Phase 1 — does NOT author it; computes recall@K and MRR; `eval/runs.jsonl` append-only log; CLI prints diff vs previous run)
+  - Plan 2: Empty-context + wrong-context refusal smoke tests [EVAL-03] (pytest cases that fail loudly if the model fabricates with no chunks or with adversarially mismatched chunks)
+  - Plan 3: RAGAS faithfulness pipeline [EVAL-04] (sample answers, claim-by-claim support check against retrieved chunks, score logged per run)
+
+## Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Schema, Forum Ingestion & Golden Eval Set | 0/5 | Not started | - |
+| 2. Retrieval Layer & Gear Aliases | 0/3 | Not started | - |
+| 3. Grounded Generation & Minimal Chat UI | 0/4 | Not started | - |
+| 4. UI Polish — Knobs, Markdown, Follow-ups | 0/4 | Not started | - |
+| 5. Evaluation Harness & Grounding Quality | 0/3 | Not started | - |
+
+---
+*Roadmap created 2026-05-15. Every v1 requirement maps to exactly one phase; coverage is 100%.*
+*Revision 2026-05-15: EVAL-01 moved from Phase 5 → Phase 1 (final plan) so the golden eval set is locked before any retrieval tuning. Phase 5 Plan 1 now loads the existing eval set rather than authoring it.*

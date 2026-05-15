@@ -76,8 +76,8 @@
 
 ### UI (Phase 4)
 
-- **UI-05**: Side-panel sources view shows all retrieved chunks for a given answer in a two-pane layout
-- **UI-06**: "Why?" toggle on each setting surfaces the source passage that motivated that specific recommendation
+- **UI-06**: Side-panel sources view shows all retrieved chunks for a given answer in a two-pane layout
+- **UI-07**: "Why?" toggle on each setting surfaces the source passage that motivated that specific recommendation
 
 ## Out of Scope
 
@@ -98,47 +98,49 @@
 
 ## Traceability
 
-_Populated during roadmap creation._
+_Populated during roadmap creation 2026-05-15. Revised 2026-05-15: EVAL-01 moved to Phase 1 so the golden eval set is locked before any retrieval tuning._
 
 | Requirement | Phase | Status |
 |---|---|---|
-| INGEST-01 | — | Pending |
-| INGEST-02 | — | Pending |
-| INGEST-03 | — | Pending |
-| INGEST-04 | — | Pending |
-| INGEST-05 | — | Pending |
-| INGEST-06 | — | Pending |
-| INGEST-07 | — | Pending |
-| RETR-01 | — | Pending |
-| RETR-02 | — | Pending |
-| RETR-03 | — | Pending |
-| GEN-01 | — | Pending |
-| GEN-02 | — | Pending |
-| GEN-03 | — | Pending |
-| GEN-04 | — | Pending |
-| GEN-05 | — | Pending |
-| GEN-06 | — | Pending |
-| GEN-07 | — | Pending |
-| CHAT-01 | — | Pending |
-| CHAT-02 | — | Pending |
-| CHAT-03 | — | Pending |
-| CHAT-04 | — | Pending |
-| CITE-01 | — | Pending |
-| CITE-02 | — | Pending |
-| CITE-03 | — | Pending |
-| UI-01 | — | Pending |
-| UI-02 | — | Pending |
-| UI-03 | — | Pending |
-| UI-04 | — | Pending |
-| EVAL-01 | — | Pending |
-| EVAL-02 | — | Pending |
-| EVAL-03 | — | Pending |
+| INGEST-01 | Phase 1 | Pending |
+| INGEST-02 | Phase 1 | Pending |
+| INGEST-03 | Phase 1 | Pending |
+| INGEST-04 | Phase 1 | Pending |
+| INGEST-05 | Phase 1 | Pending |
+| INGEST-06 | Phase 1 | Pending |
+| INGEST-07 | Phase 2 | Pending |
+| RETR-01 | Phase 2 | Pending |
+| RETR-02 | Phase 2 | Pending |
+| RETR-03 | Phase 2 | Pending |
+| GEN-01 | Phase 3 | Pending |
+| GEN-02 | Phase 3 | Pending |
+| GEN-03 | Phase 3 | Pending |
+| GEN-04 | Phase 3 | Pending |
+| GEN-05 | Phase 3 | Pending |
+| GEN-06 | Phase 3 | Pending |
+| GEN-07 | Phase 3 | Pending |
+| CHAT-01 | Phase 3 | Pending |
+| CHAT-02 | Phase 3 | Pending |
+| CHAT-03 | Phase 3 | Pending |
+| CHAT-04 | Phase 4 | Pending |
+| CITE-01 | Phase 3 | Pending |
+| CITE-02 | Phase 3 | Pending |
+| CITE-03 | Phase 3 | Pending |
+| UI-01 | Phase 4 | Pending |
+| UI-02 | Phase 4 | Pending |
+| UI-03 | Phase 4 | Pending |
+| UI-04 | Phase 4 | Pending |
+| UI-05 | Phase 4 | Pending |
+| EVAL-01 | Phase 1 | Pending |
+| EVAL-02 | Phase 5 | Pending |
+| EVAL-03 | Phase 5 | Pending |
+| EVAL-04 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 31 total
-- Mapped to phases: 0 (roadmap not yet created)
-- Unmapped: 31 ⚠️
+- v1 requirements: 33 total
+- Mapped to phases: 33 (100%) ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-15*
-*Last updated: 2026-05-15 after initial scoping session*
+*Last updated: 2026-05-15 — EVAL-01 reassigned from Phase 5 to Phase 1 (final plan) so the held-out golden eval set is written before any retrieval tuning.*
