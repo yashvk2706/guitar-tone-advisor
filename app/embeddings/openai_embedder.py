@@ -70,7 +70,8 @@ class OpenAIEmbedder:
         all_vectors: list[list[float]] = []
         for i in range(0, len(texts_list), BATCH_SIZE):
             batch = texts_list[i : i + BATCH_SIZE]
-            # STACK.md note #3: do NOT pass dimensions= — we use full native dim.
+            # STACK.md note #3: do NOT pass the OpenAI truncation parameter —
+            # we always embed at the full native dim of the chosen model.
             resp = self._client.embeddings.create(model=self.model, input=batch)
             all_vectors.extend(d.embedding for d in resp.data)
         return EmbeddingResult(
