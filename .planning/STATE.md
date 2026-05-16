@@ -1,6 +1,15 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-05-15T20:00:00.000Z"
+---
+
 # State: Guitar Tone Advisor
 
 ## Project Reference
+
 See: .planning/PROJECT.md (updated 2026-05-15)
 
 **Core value:** Given a user's gear and a target tone, produce concrete, cited settings recommendations they can immediately act on.
@@ -17,4 +26,5 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 | 5 | Evaluation Harness & Grounding Quality | Not Started |
 
 ## Active Context
-Initialized 2026-05-15. EVAL-01 moved to Phase 1 (final plan) so the golden eval set is locked before any retrieval tuning. Ready for /gsd-discuss-phase 1.
+
+Phase 1 context gathered 2026-05-15. Key decisions locked: paragraph-packing chunker with source_filename in metadata, standalone init_db.sql for schema, scripted eval authoring helper (app/eval/author.py) with 15/5 train/held-out split, requirements.txt packaging. Ready for /gsd-plan-phase 1.
