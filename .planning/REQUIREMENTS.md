@@ -9,7 +9,7 @@
 
 - [ ] **INGEST-01**: User can run a CLI command that loads all forum post `.txt` files from `raw_data/forum_posts/` into the database
 - [ ] **INGEST-02**: Each forum post is split into semantically coherent chunks with source metadata attached (source_type, source_name, chunk_index, content_hash)
-- [ ] **INGEST-03**: Chunks are embedded using the model configured via `EMBEDDING_MODEL` env var (default: `text-embedding-3-small`)
+- [x] **INGEST-03**: Chunks are embedded using the model configured via `EMBEDDING_MODEL` env var (default: `text-embedding-3-small`)
 - [x] **INGEST-04**: Embeddings and chunk text are stored in PostgreSQL with the `pgvector` extension (`chunks` table, `vector(1536)` column)
 - [x] **INGEST-05**: An HNSW index on cosine distance is created and maintained for efficient approximate nearest-neighbor retrieval
 - [ ] **INGEST-06**: Re-running ingestion is idempotent — content-hash deduplication skips unchanged chunks; only changed/new chunks are re-embedded
@@ -104,7 +104,7 @@ _Populated during roadmap creation 2026-05-15. Revised 2026-05-15: EVAL-01 moved
 |---|---|---|
 | INGEST-01 | Phase 1 | Pending |
 | INGEST-02 | Phase 1 | Pending |
-| INGEST-03 | Phase 1 | Pending |
+| INGEST-03 | Phase 1 | Complete |
 | INGEST-04 | Phase 1 | Complete |
 | INGEST-05 | Phase 1 | Complete |
 | INGEST-06 | Phase 1 | Pending |
