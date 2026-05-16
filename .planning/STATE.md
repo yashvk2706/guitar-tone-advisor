@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-05-15T20:00:00.000Z"
+status: ready_to_execute
+last_updated: "2026-05-15T21:00:00.000Z"
 ---
 
 # State: Guitar Tone Advisor
@@ -19,7 +19,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | Schema, Forum Ingestion & Golden Eval Set | Not Started |
+| 1 | Schema, Forum Ingestion & Golden Eval Set | Ready to execute (5 plans) |
 | 2 | Retrieval Layer & Gear Aliases | Not Started |
 | 3 | Grounded Generation & Minimal Chat UI | Not Started |
 | 4 | UI Polish — Knobs, Markdown, Follow-ups | Not Started |
@@ -27,4 +27,4 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 
 ## Active Context
 
-Phase 1 context gathered 2026-05-15. Key decisions locked: paragraph-packing chunker with source_filename in metadata, standalone init_db.sql for schema, scripted eval authoring helper (app/eval/author.py) with 15/5 train/held-out split, requirements.txt packaging. Ready for /gsd-plan-phase 1.
+Phase 1 planned 2026-05-15. 5 plans across 5 waves (sequential data-pipeline dependency chain). SKELETON.md records architectural decisions (Python 3.12, FastAPI 0.136, psycopg3 3.3.4, pgvector 0.4.2, OpenAI 2.36, documents/chunks/ingest_runs schema, Embedder Protocol, eval JSONL schema). Plan 05 requires human checkpoint (interactive eval authoring). Ready for /gsd-execute-phase 1.

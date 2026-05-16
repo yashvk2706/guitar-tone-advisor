@@ -1,7 +1,7 @@
 # Roadmap: Guitar Tone Advisor
 
 **Created:** 2026-05-15
-**Last updated:** 2026-05-15 (EVAL-01 moved to Phase 1 to lock the golden eval set before any retrieval tuning)
+**Last updated:** 2026-05-15 (Phase 1 plans finalized; plan files committed under `.planning/phases/01-schema-forum-ingestion-golden-eval-set/`)
 **Granularity:** Standard
 **Project mode:** Vertical MVP — each phase ships an end-to-end working slice (or the smallest verifiable deliverable thereof)
 **Coverage:** 33/33 v1 requirements mapped (100%)
@@ -21,18 +21,19 @@
 **Mode:** mvp
 **Depends on:** Nothing (first phase)
 **Requirements:** INGEST-01, INGEST-02, INGEST-03, INGEST-04, INGEST-05, INGEST-06, EVAL-01
+**Plans:** 5 plans across 5 sequential waves (W1: 01 schema; W2: 02 chunker; W3: 03 embedder; W4: 04 writer + pipeline; W5: 05 eval authoring). Walking Skeleton; see `.planning/phases/01-schema-forum-ingestion-golden-eval-set/SKELETON.md`.
 **Success Criteria** (what must be TRUE):
   1. Running `python -m app.ingest.pipeline` against `raw_data/forum_posts/` populates the `chunks` table with one row per chunk, each row carrying source_type/source_name/chunk_index/content_hash metadata
   2. Every stored chunk has a `vector(1536)` embedding generated via the model named in `EMBEDDING_MODEL` (default `text-embedding-3-small`)
   3. The `chunks` table has a working HNSW index on the embedding column using `vector_cosine_ops` (verified by `EXPLAIN ANALYZE` showing index scan, not seq scan)
   4. Re-running the ingestion CLI on unchanged input re-embeds zero chunks (idempotency via content-hash dedup)
   5. `eval/golden_set.jsonl` contains ≥20 `(query, expected_chunk_ids, expected_themes)` tuples derived from the 10 forum-post topics, with a held-out subset committed *before* any retrieval tuning has been performed (timestamp and held-out manifest recorded in `eval/HELD_OUT.md`)
-**Plans:**
-  - Plan 1: Postgres + pgvector schema migration (documents, chunks, ingest_runs tables; HNSW index; pg_trgm pre-installed for Phase 3 hybrid headroom)
-  - Plan 2: Forum-post loader and chunker (txt reader, quoted-reply stripper, ~300-800 token paragraph-packing)
-  - Plan 3: Embedder Protocol + OpenAI implementation (embed_documents/embed_query split, factory dispatch on EMBEDDING_MODEL)
-  - Plan 4: Writer with content-hash dedup (psycopg3 upsert, ingest_runs row per CLI invocation, `--full-rebuild` escape hatch)
-  - Plan 5: Golden eval set authoring [EVAL-01] (final plan of Phase 1; ≥20 query/expected-chunk/expected-theme tuples against the ingested forum chunks; held-out split locked and timestamped before Phase 2 retrieval tuning begins; JSONL schema documented; `eval/HELD_OUT.md` records which queries are held-out)
+Plans:
+- [ ] 01-01-PLAN.md — Postgres + pgvector schema migration: `scripts/init_db.sql`, `documents`/`chunks`/`ingest_runs` tables, HNSW index `chunks_embedding_hnsw_cos` with `m=16, ef_construction=64`, `pg_trgm` pre-installed for Phase 3 headroom; `app/config.py` + `app/db.py` with `register_vector` registered
+- [ ] 01-02-PLAN.md — Forum-post loader (`app/ingest/loader.py`) and paragraph-packing chunker (`app/ingest/chunker.py`); NFKC normalization, deterministic content hashes, `source_type` dispatch, forward-merge of sub-40-word paragraphs, 300–500 token budget per D-01/D-02
+- [ ] 01-03-PLAN.md — `Embedder` Protocol (`app/embeddings/base.py`), `OpenAIEmbedder` with tenacity retry and batch-of-64 (`app/embeddings/openai_embedder.py`), factory dispatch on `EMBEDDING_MODEL` (`app/embeddings/factory.py`); `embed_documents`/`embed_query` split per CLAUDE.md hard constraint
+- [ ] 01-04-PLAN.md — Writer (`app/ingest/writer.py`) with content-hash dedup, `ingest_runs` lifecycle, and CLI pipeline (`app/ingest/pipeline.py`) entry point `python -m app.ingest.pipeline [--full-rebuild]`; satisfies INGEST-01/02/06 idempotency contract
+- [ ] 01-05-PLAN.md — Golden eval set authoring [EVAL-01]: `app/eval/schema.py` (pydantic `GoldenTuple`, theme enum), `app/eval/author.py` (interactive top-K candidate review CLI per D-07), `eval/QUERIES.md` (≥20 draft queries spanning all 10 forum topics), `eval/golden_set.jsonl`, `eval/HELD_OUT.md` (15/5 split per D-10, ISO-timestamped lock per D-11); checkpoint task for human accept/reject loop
 
 ### Phase 2: Retrieval Layer & Gear Aliases
 **Goal:** A guitarist's free-text tone query (with gear shortforms like "TS9" or "JCM800") returns the top-K most relevant forum chunks with full source metadata, expanded against a curated gear-alias map before embedding.
@@ -113,3 +114,4 @@
 ---
 *Roadmap created 2026-05-15. Every v1 requirement maps to exactly one phase; coverage is 100%.*
 *Revision 2026-05-15: EVAL-01 moved from Phase 5 → Phase 1 (final plan) so the golden eval set is locked before any retrieval tuning. Phase 5 Plan 1 now loads the existing eval set rather than authoring it.*
+*Revision 2026-05-15: Phase 1 plan files finalized as `01-01-PLAN.md` through `01-05-PLAN.md`; SKELETON.md (Walking Skeleton) added; wave structure W1→W2→W3 (Plans 03+04 parallel)→W4 documented.*
