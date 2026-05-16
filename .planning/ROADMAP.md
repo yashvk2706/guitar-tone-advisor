@@ -1,7 +1,7 @@
 # Roadmap: Guitar Tone Advisor
 
 **Created:** 2026-05-15
-**Last updated:** 2026-05-16 (Phase 1 plans 01-01 / 01-02 / 01-03 complete)
+**Last updated:** 2026-05-16 (Phase 1 plans 01-01 / 01-02 / 01-03 / 01-04 complete)
 **Granularity:** Standard
 **Project mode:** Vertical MVP — each phase ships an end-to-end working slice (or the smallest verifiable deliverable thereof)
 **Coverage:** 33/33 v1 requirements mapped (100%)
@@ -32,7 +32,7 @@ Plans:
 - [x] 01-01-PLAN.md — Postgres + pgvector schema migration: `scripts/init_db.sql`, `documents`/`chunks`/`ingest_runs` tables, HNSW index `chunks_embedding_hnsw_cos` with `m=16, ef_construction=64`, `pg_trgm` pre-installed for Phase 3 headroom; `app/config.py` + `app/db.py` with `register_vector` registered
 - [x] 01-02-PLAN.md — Forum-post loader (`app/ingest/loader.py`) and paragraph-packing chunker (`app/ingest/chunker.py`); NFKC normalization, deterministic content hashes, `source_type` dispatch, forward-merge of sub-40-word paragraphs, 300–500 token budget per D-01/D-02
 - [x] 01-03-PLAN.md — `Embedder` Protocol (`app/embeddings/base.py`), `OpenAIEmbedder` with tenacity retry and batch-of-64 (`app/embeddings/openai_embedder.py`), factory dispatch on `EMBEDDING_MODEL` (`app/embeddings/factory.py`); `embed_documents`/`embed_query` split per CLAUDE.md hard constraint
-- [ ] 01-04-PLAN.md — Writer (`app/ingest/writer.py`) with content-hash dedup, `ingest_runs` lifecycle, and CLI pipeline (`app/ingest/pipeline.py`) entry point `python -m app.ingest.pipeline [--full-rebuild]`; satisfies INGEST-01/02/06 idempotency contract
+- [x] 01-04-PLAN.md — Writer (`app/ingest/writer.py`) with content-hash dedup, `ingest_runs` lifecycle, and CLI pipeline (`app/ingest/pipeline.py`) entry point `python -m app.ingest.pipeline [--full-rebuild]`; satisfies INGEST-01/02/06 idempotency contract
 - [ ] 01-05-PLAN.md — Golden eval set authoring [EVAL-01]: `app/eval/schema.py` (pydantic `GoldenTuple`, theme enum), `app/eval/author.py` (interactive top-K candidate review CLI per D-07), `eval/QUERIES.md` (≥20 draft queries spanning all 10 forum topics), `eval/golden_set.jsonl`, `eval/HELD_OUT.md` (15/5 split per D-10, ISO-timestamped lock per D-11); checkpoint task for human accept/reject loop
 
 ### Phase 2: Retrieval Layer & Gear Aliases
@@ -105,7 +105,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Schema, Forum Ingestion & Golden Eval Set | 0/5 | Not started | - |
+| 1. Schema, Forum Ingestion & Golden Eval Set | 4/5 | In Progress | - |
 | 2. Retrieval Layer & Gear Aliases | 0/3 | Not started | - |
 | 3. Grounded Generation & Minimal Chat UI | 0/4 | Not started | - |
 | 4. UI Polish — Knobs, Markdown, Follow-ups | 0/4 | Not started | - |
