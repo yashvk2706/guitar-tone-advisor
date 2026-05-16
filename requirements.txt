@@ -1,0 +1,20 @@
+# Phase 1 pinned dependencies — versions LOCKED per .planning/research/STACK.md and CLAUDE.md.
+# Do NOT bump or downgrade individual entries without re-running the STACK research.
+# Hard non-deps (per CLAUDE.md): LangChain, LlamaIndex, langchain-text-splitters,
+# chromadb, qdrant, newspaper3k, psycopg2.
+
+fastapi==0.136.1
+uvicorn[standard]==0.46.0
+sse-starlette==3.4.4
+pydantic-settings==2.14.1
+python-dotenv==1.2.2
+psycopg[binary]==3.3.4
+pgvector==0.4.2
+anthropic==0.102.0
+openai==2.36.0
+tenacity==9.1.4
+tiktoken==0.12.0
+
+# Optional embedding backends — uncomment only when EMBEDDING_MODEL switches to them.
+# voyageai==0.3.7
+# sentence-transformers==5.5.0

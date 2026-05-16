@@ -5,3 +5,12 @@ __pycache__/
 .env.local
 node_modules/
 .next/
+
+# Python tooling caches
+.pytest_cache/
+.ruff_cache/
+.venv/
+
+# Raw corpus caches — committed forum posts stay tracked; fetched HTML & transcripts do not.
+raw_data/web_html/
+raw_data/transcripts/
