@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready_to_execute
-last_updated: "2026-05-19T13:00:00Z"
+last_updated: "2026-05-19T19:47:52Z"
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 8
-  completed_plans: 7
-  percent: 87
+  completed_plans: 8
+  percent: 100
 ---
 
 # State: Guitar Tone Advisor
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 | Phase | Name | Status |
 |-------|------|--------|
 | 1 | Schema, Forum Ingestion & Golden Eval Set | Complete (5/5 plans) |
-| 2 | Retrieval Layer & Gear Aliases | In Progress (2/3 plans complete) |
+| 2 | Retrieval Layer & Gear Aliases | Complete (3/3 plans) |
 | 3 | Grounded Generation & Minimal Chat UI | Not Started |
 | 4 | UI Polish — Knobs, Markdown, Follow-ups | Not Started |
 | 5 | Evaluation Harness & Grounding Quality | Not Started |
@@ -37,7 +37,9 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 
 **Phase 2 Plan 01 complete (2026-05-19).** data/gear_aliases.json (14 corpus-verified alias pairs) + app/retrieval/__init__.py + app/retrieval/aliases.py (expand_query bidirectional word-boundary regex, lru_cache) + app/retrieval/base.py (ChunkResult frozen dataclass, retrieve() HNSW function) committed. 19/19 tests pass (17 offline + 2 live-DB). INGEST-07 satisfied. Key fixes: skip-on-shortform-match to prevent double-expansion; Vector() wrapper for pgvector SELECT <=> params (list[float] alone produces double precision[] which fails operator lookup).
 
-**Phase 2 Plan 02 complete (2026-05-19).** app/retrieval/base.py verified: all 7 plan verification tests pass. Settings.debug field added (debug: bool = False). EXPLAIN ANALYZE debug logging added to retrieve() (gated on settings.debug). test_no_fstring_sql alias added to tests/test_retrieval.py. 97/97 offline tests pass (5 live-DB skipped). RETR-01, RETR-02, RETR-03 satisfied. Plan 03 (test suite static guards) is next.
+**Phase 2 Plan 02 complete (2026-05-19).** app/retrieval/base.py verified: all 7 plan verification tests pass. Settings.debug field added (debug: bool = False). EXPLAIN ANALYZE debug logging added to retrieve() (gated on settings.debug). test_no_fstring_sql alias added to tests/test_retrieval.py. 97/97 offline tests pass (5 live-DB skipped). RETR-01, RETR-02, RETR-03 satisfied.
+
+**Phase 2 Plan 03 complete (2026-05-19).** tests/test_retrieval.py finalized: import dataclasses added; test_chunk_result_is_frozen updated to use dataclasses.FrozenInstanceError (plan success criteria); test_chunk_result_fields updated to assert field names via dataclasses.fields(). 18 offline tests pass, 2 live-DB tests skip gracefully. Full suite: 97 passed, 5 skipped. Phase 2 complete — all 3/3 plans shipped. INGEST-07, RETR-01, RETR-02, RETR-03 satisfied.
 
 ## Decisions
 
@@ -49,9 +51,10 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 - [Infrastructure]: Docker Compose (`docker-compose.yml`) added with `pgvector/pgvector:pg17` image. Python 3.12 venv at `venv/`. DATABASE_URL uses `postgres:postgres` credentials for local Docker instance.
 - [Phase 2 Plan 01]: data/gear_aliases.json (14 corpus-verified pairs: Strat/Tele/EVH/SLO/5150/6505/AX8/SD1/GE-7/HM-2/Dual Rec/Maxon 808/SRV/SSS). app/retrieval/aliases.py: skip-on-shortform-match pattern prevents double-expansion (Pitfall 3 fix — PATTERNS.md ran both re.sub rules unconditionally). app/retrieval/base.py: Vector() wrapper required for pgvector SELECT <=> params — VectorDumper only registered for Vector/numpy.ndarray, not plain list[float]; INSERT works without it (column type provides cast context) but SELECT does not. Test runner must use venv/bin/python (system anaconda lacks psycopg/pgvector). INGEST-07 complete.
 - [Phase 2 Plan 02]: Settings.debug: bool = False added to app/config.py (plan done criteria). EXPLAIN ANALYZE debug logging wired into retrieve() — gated on settings.debug, prints plan rows to stdout. test_no_fstring_sql = test_no_fstring_sql_in_base alias added to tests/test_retrieval.py so plan's exact pytest verification command resolves. 7/7 plan verification tests pass. RETR-01, RETR-02, RETR-03 complete.
+- [Phase 2 Plan 03]: tests/test_retrieval.py finalized for plan 03 success criteria: import dataclasses added; test_chunk_result_is_frozen uses dataclasses.FrozenInstanceError (not (AttributeError, TypeError)); test_chunk_result_fields asserts exact 7-field set via dataclasses.fields(). Extra coverage tests from Plans 01/02 kept (case-insensitive expansion, count-one, no-match, empty-pairs, load-14-tuples, source-name mapping). Phase 2 complete.
 
 ## Session Continuity
 
 Last session: 2026-05-19
-Stopped at: Phase 2 Plan 02 complete. 02-03-PLAN.md is next.
-Resume file: .planning/phases/02-retrieval-layer-gear-aliases/02-03-PLAN.md
+Stopped at: Phase 2 complete (3/3 plans). Phase 3 (Grounded Generation & Minimal Chat UI) is next.
+Resume file: .planning/phases/03-generation-chat-ui/ (not yet created)

@@ -17,9 +17,9 @@
 
 ### Retrieval
 
-- [ ] **RETR-01**: Given a user tone query, the system retrieves the top-K most relevant chunks via HNSW cosine similarity search
-- [ ] **RETR-02**: User query is expanded using gear aliases before embedding (both shortforms and full names searched)
-- [ ] **RETR-03**: Retrieved chunks include full source metadata (source_type, source_name, page/chunk reference) passed to the generation layer
+- [x] **RETR-01**: Given a user tone query, the system retrieves the top-K most relevant chunks via HNSW cosine similarity search
+- [x] **RETR-02**: User query is expanded using gear aliases before embedding (both shortforms and full names searched)
+- [x] **RETR-03**: Retrieved chunks include full source metadata (source_type, source_name, page/chunk reference) passed to the generation layer
 
 ### Generation
 
@@ -108,10 +108,10 @@ _Populated during roadmap creation 2026-05-15. Revised 2026-05-15: EVAL-01 moved
 | INGEST-04 | Phase 1 | Complete |
 | INGEST-05 | Phase 1 | Complete |
 | INGEST-06 | Phase 1 | Complete |
-| INGEST-07 | Phase 2 | Pending |
-| RETR-01 | Phase 2 | Pending |
-| RETR-02 | Phase 2 | Pending |
-| RETR-03 | Phase 2 | Pending |
+| INGEST-07 | Phase 2 | Complete |
+| RETR-01 | Phase 2 | Complete |
+| RETR-02 | Phase 2 | Complete |
+| RETR-03 | Phase 2 | Complete |
 | GEN-01 | Phase 3 | Pending |
 | GEN-02 | Phase 3 | Pending |
 | GEN-03 | Phase 3 | Pending |
