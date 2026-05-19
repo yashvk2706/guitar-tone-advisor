@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready_to_execute
-last_updated: "2026-05-19T12:19:02Z"
+last_updated: "2026-05-19T13:00:00Z"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 8
-  completed_plans: 6
-  percent: 75
+  completed_plans: 7
+  percent: 87
 ---
 
 # State: Guitar Tone Advisor
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 | Phase | Name | Status |
 |-------|------|--------|
 | 1 | Schema, Forum Ingestion & Golden Eval Set | Complete (5/5 plans) |
-| 2 | Retrieval Layer & Gear Aliases | In Progress (1/3 plans complete) |
+| 2 | Retrieval Layer & Gear Aliases | In Progress (2/3 plans complete) |
 | 3 | Grounded Generation & Minimal Chat UI | Not Started |
 | 4 | UI Polish — Knobs, Markdown, Follow-ups | Not Started |
 | 5 | Evaluation Harness & Grounding Quality | Not Started |
@@ -35,7 +35,9 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 
 **Phase 1 complete (2026-05-19).** All 5 plans shipped. 21 chunks from 10 forum posts embedded and stored in Postgres (pgvector/pg17 via Docker). Golden eval set authored and committed: `eval/golden_set.jsonl` (22 tuples) + `eval/HELD_OUT.md` (5 held-out tuples from 5 distinct topics: bb_king, eddie_van_halen, funk, lo_fi, mark_knopfler). D-11 audit statement locked at 2026-05-19T00:54:58+00:00. Infrastructure: Python 3.12 venv at `venv/`, Docker Compose at `docker-compose.yml` (pgvector/pgvector:pg17), `.env` with DATABASE_URL + OPENAI_API_KEY.
 
-**Phase 2 Plan 01 complete (2026-05-19).** data/gear_aliases.json (14 corpus-verified alias pairs) + app/retrieval/__init__.py + app/retrieval/aliases.py (expand_query bidirectional word-boundary regex, lru_cache) + app/retrieval/base.py (ChunkResult frozen dataclass, retrieve() HNSW function) committed. 19/19 tests pass (17 offline + 2 live-DB). INGEST-07 satisfied. Key fixes: skip-on-shortform-match to prevent double-expansion; Vector() wrapper for pgvector SELECT <=> params (list[float] alone produces double precision[] which fails operator lookup). Plan 02 (dense retrieval full test suite) is next.
+**Phase 2 Plan 01 complete (2026-05-19).** data/gear_aliases.json (14 corpus-verified alias pairs) + app/retrieval/__init__.py + app/retrieval/aliases.py (expand_query bidirectional word-boundary regex, lru_cache) + app/retrieval/base.py (ChunkResult frozen dataclass, retrieve() HNSW function) committed. 19/19 tests pass (17 offline + 2 live-DB). INGEST-07 satisfied. Key fixes: skip-on-shortform-match to prevent double-expansion; Vector() wrapper for pgvector SELECT <=> params (list[float] alone produces double precision[] which fails operator lookup).
+
+**Phase 2 Plan 02 complete (2026-05-19).** app/retrieval/base.py verified: all 7 plan verification tests pass. Settings.debug field added (debug: bool = False). EXPLAIN ANALYZE debug logging added to retrieve() (gated on settings.debug). test_no_fstring_sql alias added to tests/test_retrieval.py. 97/97 offline tests pass (5 live-DB skipped). RETR-01, RETR-02, RETR-03 satisfied. Plan 03 (test suite static guards) is next.
 
 ## Decisions
 
@@ -46,9 +48,10 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 - [Phase 1 Plan 05]: Golden eval set authored and committed. 22 GoldenTuples in `eval/golden_set.jsonl`, 5 held-out (indices 0, 2, 4, 8, 11) from bb_king_tone, eddie_van_halen_tone, funk_tone, lo_fi_tone, mark_knopfler_bowed_sound. `eval/HELD_OUT.md` locked at 2026-05-19T00:54:58+00:00 with D-11 audit statement. `app/eval/author.py` gained `--full-text` flag post-plan for reviewer convenience. EVAL-01 satisfied.
 - [Infrastructure]: Docker Compose (`docker-compose.yml`) added with `pgvector/pgvector:pg17` image. Python 3.12 venv at `venv/`. DATABASE_URL uses `postgres:postgres` credentials for local Docker instance.
 - [Phase 2 Plan 01]: data/gear_aliases.json (14 corpus-verified pairs: Strat/Tele/EVH/SLO/5150/6505/AX8/SD1/GE-7/HM-2/Dual Rec/Maxon 808/SRV/SSS). app/retrieval/aliases.py: skip-on-shortform-match pattern prevents double-expansion (Pitfall 3 fix — PATTERNS.md ran both re.sub rules unconditionally). app/retrieval/base.py: Vector() wrapper required for pgvector SELECT <=> params — VectorDumper only registered for Vector/numpy.ndarray, not plain list[float]; INSERT works without it (column type provides cast context) but SELECT does not. Test runner must use venv/bin/python (system anaconda lacks psycopg/pgvector). INGEST-07 complete.
+- [Phase 2 Plan 02]: Settings.debug: bool = False added to app/config.py (plan done criteria). EXPLAIN ANALYZE debug logging wired into retrieve() — gated on settings.debug, prints plan rows to stdout. test_no_fstring_sql = test_no_fstring_sql_in_base alias added to tests/test_retrieval.py so plan's exact pytest verification command resolves. 7/7 plan verification tests pass. RETR-01, RETR-02, RETR-03 complete.
 
 ## Session Continuity
 
 Last session: 2026-05-19
-Stopped at: Phase 2 Plan 01 complete. 02-02-PLAN.md is next.
-Resume file: .planning/phases/02-retrieval-layer-gear-aliases/02-02-PLAN.md
+Stopped at: Phase 2 Plan 02 complete. 02-03-PLAN.md is next.
+Resume file: .planning/phases/02-retrieval-layer-gear-aliases/02-03-PLAN.md
