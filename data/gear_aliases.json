@@ -1,0 +1,18 @@
+{
+  "aliases": [
+    {"shortform": "Strat",     "canonical": "Stratocaster"},
+    {"shortform": "Tele",      "canonical": "Telecaster"},
+    {"shortform": "EVH",       "canonical": "Eddie Van Halen"},
+    {"shortform": "SLO",       "canonical": "Soldano SLO-100"},
+    {"shortform": "5150",      "canonical": "Peavey 5150"},
+    {"shortform": "6505",      "canonical": "Peavey 6505"},
+    {"shortform": "AX8",       "canonical": "Fractal AX8"},
+    {"shortform": "SD1",       "canonical": "Boss SD-1"},
+    {"shortform": "GE-7",      "canonical": "Boss GE-7"},
+    {"shortform": "HM-2",      "canonical": "Boss HM-2"},
+    {"shortform": "Dual Rec",  "canonical": "Mesa Dual Rectifier"},
+    {"shortform": "Maxon 808", "canonical": "Maxon OD808"},
+    {"shortform": "SRV",       "canonical": "Stevie Ray Vaughan"},
+    {"shortform": "SSS",       "canonical": "Dumble Steel String Slinger"}
+  ]
+}
