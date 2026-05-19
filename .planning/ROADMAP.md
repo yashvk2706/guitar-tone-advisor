@@ -1,7 +1,7 @@
 # Roadmap: Guitar Tone Advisor
 
 **Created:** 2026-05-15
-**Last updated:** 2026-05-19 (Phase 1 complete — all 5 plans done, golden eval set committed)
+**Last updated:** 2026-05-19 (Phase 2 planned — 3 plans across 3 sequential waves)
 **Granularity:** Standard
 **Project mode:** Vertical MVP — each phase ships an end-to-end working slice (or the smallest verifiable deliverable thereof)
 **Coverage:** 33/33 v1 requirements mapped (100%)
@@ -40,15 +40,16 @@ Plans:
 **Mode:** mvp
 **Depends on:** Phase 1 (chunks must exist in the store and the golden eval set must be locked before tuning K, chunking, or expansion)
 **Requirements:** INGEST-07, RETR-01, RETR-02, RETR-03
+**Plans:** 3 plans across 3 sequential waves (W1: 02-01 alias file + expansion module; W2: 02-02 dense retrieval function; W3: 02-03 tests + static guards)
 **Success Criteria** (what must be TRUE):
   1. A `gear_aliases.json` file exists mapping at least the gear referenced in the existing forum corpus (TS9, JCM800, EVH, Strat, etc.) bidirectionally to canonical names
   2. A query containing a gear shortform retrieves the same top chunks as the same query with the canonical name (verified by spot check on at least 3 alias pairs)
   3. A retrieval call returns the top-K=8 chunks ranked by HNSW cosine similarity, each chunk dict including source_type, source_name, chunk_index/page reference, and raw text
   4. Retrieval-layer unit test asserts `register_vector(conn)` is invoked once per pool connection and queries use the `<=>` cosine operator
-**Plans:**
-  - Plan 1: `gear_aliases.json` authoring + bidirectional expansion module (alias → canonical and canonical → alias both injected into pre-embedding query string)
-  - Plan 2: Dense retrieval function (HNSW cosine search, K=8, filters by embedding_model defensively)
-  - Plan 3: Metadata-preserving result envelope (chunk text + source fields surfaced to the generation layer; `EXPLAIN ANALYZE` logged in dev)
+Plans:
+- [ ] 02-01-PLAN.md — `data/gear_aliases.json` (14 corpus-verified pairs) + `app/retrieval/__init__.py` (empty package) + `app/retrieval/aliases.py` (`_load_alias_pairs` with lru_cache, `expand_query` with re.sub word-boundary matching per D-03/D-05); covers INGEST-07
+- [ ] 02-02-PLAN.md — `app/retrieval/base.py`: `ChunkResult` frozen dataclass (7 fields per D-06), `_RETRIEVE_SQL` constant (<=> cosine, %s params, query_vec twice), `_row_to_chunk_result` (metadata_json['source_filename'] → source_name), `retrieve()` (expand_query → embed_query → cursor.execute → list[ChunkResult]); covers RETR-01, RETR-02, RETR-03
+- [ ] 02-03-PLAN.md — `tests/test_retrieval.py`: 12 offline unit/static tests + 2 live-DB integration tests (db_conn-gated, skip if Postgres unreachable); _FakeEmbedder + _FakeConn + _FakeCursor helpers; static guards for no-openai-import, no-f-string-SQL, no-register_vector-in-retrieve; covers verification of all 4 Phase 2 requirements
 
 ### Phase 3: Grounded Generation & Minimal Chat UI
 **Goal:** A guitarist opens the web app, types their gear + a target tone, and watches a streamed, cited recommendation appear — with `[S{n}]` markers that open a drawer showing the actual forum-post text, and a refusal-with-reason whenever the corpus is silent.
@@ -105,7 +106,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Schema, Forum Ingestion & Golden Eval Set | 4/5 | In Progress | - |
+| 1. Schema, Forum Ingestion & Golden Eval Set | 5/5 | Complete | 2026-05-19 |
 | 2. Retrieval Layer & Gear Aliases | 0/3 | Not started | - |
 | 3. Grounded Generation & Minimal Chat UI | 0/4 | Not started | - |
 | 4. UI Polish — Knobs, Markdown, Follow-ups | 0/4 | Not started | - |
@@ -115,3 +116,4 @@ Plans:
 *Roadmap created 2026-05-15. Every v1 requirement maps to exactly one phase; coverage is 100%.*
 *Revision 2026-05-15: EVAL-01 moved from Phase 5 → Phase 1 (final plan) so the golden eval set is locked before any retrieval tuning. Phase 5 Plan 1 now loads the existing eval set rather than authoring it.*
 *Revision 2026-05-15: Phase 1 plan files finalized as `01-01-PLAN.md` through `01-05-PLAN.md`; SKELETON.md (Walking Skeleton) added; wave structure W1→W2→W3 (Plans 03+04 parallel)→W4 documented.*
+*Revision 2026-05-19: Phase 2 planned — 3 plans across 3 sequential waves. 02-01 alias file/expansion, 02-02 dense retrieval (ChunkResult + retrieve()), 02-03 test suite + static guards.*
