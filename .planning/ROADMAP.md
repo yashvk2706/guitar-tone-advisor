@@ -1,14 +1,14 @@
 # Roadmap: Guitar Tone Advisor
 
 **Created:** 2026-05-15
-**Last updated:** 2026-05-16 (Phase 1 plans 01-01 / 01-02 / 01-03 / 01-04 complete)
+**Last updated:** 2026-05-19 (Phase 1 complete — all 5 plans done, golden eval set committed)
 **Granularity:** Standard
 **Project mode:** Vertical MVP — each phase ships an end-to-end working slice (or the smallest verifiable deliverable thereof)
 **Coverage:** 33/33 v1 requirements mapped (100%)
 
 ## Phases
 
-- [ ] **Phase 1: Schema, Forum Ingestion & Golden Eval Set** — Migrate Postgres + pgvector, build forum-only CLI ingestion pipeline, and author the held-out golden eval set before any retrieval tuning
+- [x] **Phase 1: Schema, Forum Ingestion & Golden Eval Set** — Migrate Postgres + pgvector, build forum-only CLI ingestion pipeline, and author the held-out golden eval set before any retrieval tuning
 - [ ] **Phase 2: Retrieval Layer & Gear Aliases** — Wire HNSW cosine retrieval through the Embedder Protocol with bidirectional gear-alias query expansion
 - [ ] **Phase 3: Grounded Generation & Minimal Chat UI** — End-to-end SSE-streamed answers with inline `[S{n}]` citations rendered in a minimal Next.js chat
 - [ ] **Phase 4: UI Polish — Knobs, Markdown, Follow-ups** — Add rotary-knob settings, Markdown rendering, follow-up buttons, copy-to-clipboard, loading states, session history
@@ -33,7 +33,7 @@ Plans:
 - [x] 01-02-PLAN.md — Forum-post loader (`app/ingest/loader.py`) and paragraph-packing chunker (`app/ingest/chunker.py`); NFKC normalization, deterministic content hashes, `source_type` dispatch, forward-merge of sub-40-word paragraphs, 300–500 token budget per D-01/D-02
 - [x] 01-03-PLAN.md — `Embedder` Protocol (`app/embeddings/base.py`), `OpenAIEmbedder` with tenacity retry and batch-of-64 (`app/embeddings/openai_embedder.py`), factory dispatch on `EMBEDDING_MODEL` (`app/embeddings/factory.py`); `embed_documents`/`embed_query` split per CLAUDE.md hard constraint
 - [x] 01-04-PLAN.md — Writer (`app/ingest/writer.py`) with content-hash dedup, `ingest_runs` lifecycle, and CLI pipeline (`app/ingest/pipeline.py`) entry point `python -m app.ingest.pipeline [--full-rebuild]`; satisfies INGEST-01/02/06 idempotency contract
-- [ ] 01-05-PLAN.md — Golden eval set authoring [EVAL-01]: `app/eval/schema.py` (pydantic `GoldenTuple`, theme enum), `app/eval/author.py` (interactive top-K candidate review CLI per D-07), `eval/QUERIES.md` (≥20 draft queries spanning all 10 forum topics), `eval/golden_set.jsonl`, `eval/HELD_OUT.md` (15/5 split per D-10, ISO-timestamped lock per D-11); checkpoint task for human accept/reject loop
+- [x] 01-05-PLAN.md — Golden eval set authoring [EVAL-01]: `app/eval/schema.py` (pydantic `GoldenTuple`, theme enum), `app/eval/author.py` (interactive top-K candidate review CLI per D-07), `eval/QUERIES.md` (≥20 draft queries spanning all 10 forum topics), `eval/golden_set.jsonl`, `eval/HELD_OUT.md` (15/5 split per D-10, ISO-timestamped lock per D-11); checkpoint task for human accept/reject loop
 
 ### Phase 2: Retrieval Layer & Gear Aliases
 **Goal:** A guitarist's free-text tone query (with gear shortforms like "TS9" or "JCM800") returns the top-K most relevant forum chunks with full source metadata, expanded against a curated gear-alias map before embedding.
