@@ -1,16 +1,19 @@
-"""Retrieval layer tests — Phase 2 Plan 01.
+"""Retrieval layer tests — Phase 2.
 
 Covers:
   - gear_aliases.json file structure (INGEST-07)
   - expand_query() bidirectional expansion (INGEST-07)
   - ChunkResult dataclass shape and immutability (RETR-03)
-  - retrieve() with injected fake connection/embedder (RETR-01)
+  - retrieve() with injected fake connection/embedder (RETR-01, RETR-02)
   - Static-scan guards: no f-string SQL, no direct openai import,
     register_vector not called inside retrieve() (CLAUDE.md constraints)
+
+14 named tests total: 12 offline + 2 live-DB integration (skipped when Postgres unavailable).
 """
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import re
 from pathlib import Path
@@ -202,7 +205,7 @@ def test_load_alias_pairs_returns_14_tuples():
 
 
 def test_chunk_result_fields():
-    """ChunkResult must expose all required typed fields."""
+    """ChunkResult must expose all 7 required typed fields (verified via dataclasses.fields)."""
     from app.retrieval.base import ChunkResult
 
     cr = ChunkResult(
@@ -221,10 +224,21 @@ def test_chunk_result_fields():
     assert cr.chunk_index == 0
     assert cr.text == "Some chunk text"
     assert cr.distance == 0.25
+    # Verify all 7 field names via dataclasses.fields()
+    field_names = {f.name for f in dataclasses.fields(cr)}
+    assert field_names == {
+        "chunk_id",
+        "document_id",
+        "source_type",
+        "source_name",
+        "chunk_index",
+        "text",
+        "distance",
+    }, f"unexpected field names: {field_names}"
 
 
 def test_chunk_result_is_frozen():
-    """ChunkResult must be a frozen dataclass (immutable)."""
+    """ChunkResult must be a frozen dataclass — field assignment raises FrozenInstanceError."""
     from app.retrieval.base import ChunkResult
 
     cr = ChunkResult(
@@ -236,8 +250,8 @@ def test_chunk_result_is_frozen():
         text="hello",
         distance=0.1,
     )
-    with pytest.raises((AttributeError, TypeError)):
-        cr.chunk_id = "mutated"  # type: ignore[misc]
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        cr.text = "mutated"  # type: ignore[misc]
 
 
 # ---------------------------------------------------------------------------
