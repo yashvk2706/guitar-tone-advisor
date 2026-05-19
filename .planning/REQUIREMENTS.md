@@ -13,7 +13,7 @@
 - [x] **INGEST-04**: Embeddings and chunk text are stored in PostgreSQL with the `pgvector` extension (`chunks` table, `vector(1536)` column)
 - [x] **INGEST-05**: An HNSW index on cosine distance is created and maintained for efficient approximate nearest-neighbor retrieval
 - [x] **INGEST-06**: Re-running ingestion is idempotent — content-hash deduplication skips unchanged chunks; only changed/new chunks are re-embedded
-- [ ] **INGEST-07**: A `gear_aliases.json` file maps gear shortforms to canonical names (e.g., `TS9 ↔ Ibanez Tube Screamer`, `Strat ↔ Stratocaster`) and bidirectional alias expansion is applied to user queries before embedding
+- [x] **INGEST-07**: A `gear_aliases.json` file maps gear shortforms to canonical names (e.g., `TS9 ↔ Ibanez Tube Screamer`, `Strat ↔ Stratocaster`) and bidirectional alias expansion is applied to user queries before embedding
 
 ### Retrieval
 

@@ -47,7 +47,7 @@ Plans:
   3. A retrieval call returns the top-K=8 chunks ranked by HNSW cosine similarity, each chunk dict including source_type, source_name, chunk_index/page reference, and raw text
   4. Retrieval-layer unit test asserts `register_vector(conn)` is invoked once per pool connection and queries use the `<=>` cosine operator
 Plans:
-- [ ] 02-01-PLAN.md — `data/gear_aliases.json` (14 corpus-verified pairs) + `app/retrieval/__init__.py` (empty package) + `app/retrieval/aliases.py` (`_load_alias_pairs` with lru_cache, `expand_query` with re.sub word-boundary matching per D-03/D-05); covers INGEST-07
+- [x] 02-01-PLAN.md — `data/gear_aliases.json` (14 corpus-verified pairs) + `app/retrieval/__init__.py` (empty package) + `app/retrieval/aliases.py` (`_load_alias_pairs` with lru_cache, `expand_query` with re.sub word-boundary matching per D-03/D-05); covers INGEST-07
 - [ ] 02-02-PLAN.md — `app/retrieval/base.py`: `ChunkResult` frozen dataclass (7 fields per D-06), `_RETRIEVE_SQL` constant (<=> cosine, %s params, query_vec twice), `_row_to_chunk_result` (metadata_json['source_filename'] → source_name), `retrieve()` (expand_query → embed_query → cursor.execute → list[ChunkResult]); covers RETR-01, RETR-02, RETR-03
 - [ ] 02-03-PLAN.md — `tests/test_retrieval.py`: 12 offline unit/static tests + 2 live-DB integration tests (db_conn-gated, skip if Postgres unreachable); _FakeEmbedder + _FakeConn + _FakeCursor helpers; static guards for no-openai-import, no-f-string-SQL, no-register_vector-in-retrieve; covers verification of all 4 Phase 2 requirements
 
@@ -107,7 +107,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Schema, Forum Ingestion & Golden Eval Set | 5/5 | Complete | 2026-05-19 |
-| 2. Retrieval Layer & Gear Aliases | 0/3 | Not started | - |
+| 2. Retrieval Layer & Gear Aliases | 1/3 | In progress | - |
 | 3. Grounded Generation & Minimal Chat UI | 0/4 | Not started | - |
 | 4. UI Polish — Knobs, Markdown, Follow-ups | 0/4 | Not started | - |
 | 5. Evaluation Harness & Grounding Quality | 0/3 | Not started | - |
