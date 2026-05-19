@@ -12,7 +12,10 @@ Given a user's gear and a target tone, produce concrete, cited settings recommen
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Embeddings are generated and stored in pgvector via the configurable embedding model — *Validated in Phase 1: Schema, Forum Ingestion & Golden Eval Set*
+- [x] Corpus ingestion pipeline processes forum posts (Phase 1 source type) — *Validated in Phase 1*
+- [x] RAG retrieval fetches relevant passages given a tone query — *Validated in Phase 2: Retrieval Layer & Gear Aliases*
+- [x] Embedding model is configurable via environment variable without code changes — *Validated in Phase 1/2 (EMBEDDING_MODEL env var + Embedder Protocol)*
 
 ### Active
 
@@ -88,4 +91,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-13 after initialization*
+*Last updated: 2026-05-19 — Phase 2 complete (retrieval layer + gear alias expansion)*
