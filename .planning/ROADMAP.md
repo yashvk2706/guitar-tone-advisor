@@ -40,7 +40,7 @@ Plans:
 **Mode:** mvp
 **Depends on:** Phase 1 (chunks must exist in the store and the golden eval set must be locked before tuning K, chunking, or expansion)
 **Requirements:** INGEST-07, RETR-01, RETR-02, RETR-03
-**Plans:** 3 plans across 3 sequential waves (W1: 02-01 alias file + expansion module; W2: 02-02 dense retrieval function; W3: 02-03 tests + static guards)
+**Plans:** 3/3 plans complete
 **Success Criteria** (what must be TRUE):
   1. A `gear_aliases.json` file exists mapping at least the gear referenced in the existing forum corpus (TS9, JCM800, EVH, Strat, etc.) bidirectionally to canonical names
   2. A query containing a gear shortform retrieves the same top chunks as the same query with the canonical name (verified by spot check on at least 3 alias pairs)
@@ -107,7 +107,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Schema, Forum Ingestion & Golden Eval Set | 5/5 | Complete | 2026-05-19 |
-| 2. Retrieval Layer & Gear Aliases | 3/3 | Complete | 2026-05-19 |
+| 2. Retrieval Layer & Gear Aliases | 3/3 | Complete    | 2026-05-19 |
 | 3. Grounded Generation & Minimal Chat UI | 0/4 | Not started | - |
 | 4. UI Polish — Knobs, Markdown, Follow-ups | 0/4 | Not started | - |
 | 5. Evaluation Harness & Grounding Quality | 0/3 | Not started | - |
