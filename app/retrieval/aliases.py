@@ -81,30 +81,29 @@ def expand_query(
     for shortform, canonical in pairs:
         replacement = f"{shortform} {canonical}"
 
-        # Expand shortform → "shortform canonical".
-        # If the shortform rule fires, the replacement already contains the
-        # canonical token — skip the canonical rule to avoid double-expansion
-        # (RESEARCH.md Pitfall 3: "Strat" → "Strat Stratocaster" then canonical
-        # rule would re-fire on "Stratocaster" in the replacement string).
-        before = result
-        result = re.sub(
-            rf"\b{re.escape(shortform)}\b",
-            replacement,
-            result,
-            count=1,
-            flags=re.IGNORECASE,
-        )
-        if result != before:
-            # Shortform expansion fired — canonical already present; skip.
-            continue
-
-        # Shortform was NOT in query — try canonical → "shortform canonical"
-        result = re.sub(
-            rf"\b{re.escape(canonical)}\b",
-            replacement,
-            result,
-            count=1,
-            flags=re.IGNORECASE,
-        )
+        # Check canonical presence BEFORE trying the shortform rule.
+        # For 6 of 14 pairs the shortform is a standalone word inside the
+        # canonical (e.g. "5150" inside "Peavey 5150", "SLO" inside
+        # "Soldano SLO-100"). If we tried the shortform rule first, \b5150\b
+        # would match the "5150" in "Peavey 5150" and produce a doubled token
+        # ("Peavey 5150 Peavey 5150") before the canonical rule could fire.
+        if re.search(rf"\b{re.escape(canonical)}\b", result, re.IGNORECASE):
+            # Canonical already present — normalise to "shortform canonical".
+            result = re.sub(
+                rf"\b{re.escape(canonical)}\b",
+                replacement,
+                result,
+                count=1,
+                flags=re.IGNORECASE,
+            )
+        else:
+            # Canonical absent — try shortform → "shortform canonical".
+            result = re.sub(
+                rf"\b{re.escape(shortform)}\b",
+                replacement,
+                result,
+                count=1,
+                flags=re.IGNORECASE,
+            )
 
     return result

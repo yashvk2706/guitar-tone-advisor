@@ -188,6 +188,52 @@ def test_expand_empty_pairs():
     assert result == "Stratocaster tone", repr(result)
 
 
+@pytest.mark.parametrize(
+    "query,pair,expected_short,expected_full",
+    [
+        # shortform is a standalone word inside the canonical — the tricky 6
+        ("5150 amp", ("5150", "Peavey 5150"), "5150", "Peavey 5150"),
+        ("Peavey 5150 amp", ("5150", "Peavey 5150"), "5150", "Peavey 5150"),
+        ("6505 crunch", ("6505", "Peavey 6505"), "6505", "Peavey 6505"),
+        ("Peavey 6505 crunch", ("6505", "Peavey 6505"), "6505", "Peavey 6505"),
+        ("GE-7 eq pedal", ("GE-7", "Boss GE-7"), "GE-7", "Boss GE-7"),
+        ("Boss GE-7 eq", ("GE-7", "Boss GE-7"), "GE-7", "Boss GE-7"),
+        ("HM-2 distortion", ("HM-2", "Boss HM-2"), "HM-2", "Boss HM-2"),
+        ("Boss HM-2 distortion", ("HM-2", "Boss HM-2"), "HM-2", "Boss HM-2"),
+        ("AX8 patch", ("AX8", "Fractal AX8"), "AX8", "Fractal AX8"),
+        ("Fractal AX8 patch", ("AX8", "Fractal AX8"), "AX8", "Fractal AX8"),
+        ("SLO lead tone", ("SLO", "Soldano SLO-100"), "SLO", "Soldano SLO-100"),
+        ("Soldano SLO-100 tone", ("SLO", "Soldano SLO-100"), "SLO", "Soldano SLO-100"),
+    ],
+)
+def test_expand_canonical_contains_shortform(query, pair, expected_short, expected_full):
+    """Pairs where the shortform is a word inside the canonical must expand
+    correctly in both directions — no double-token corruption."""
+    from app.retrieval.aliases import expand_query
+
+    result = expand_query(query, [pair])
+    # The expansion pattern "shortform canonical" must be present.
+    # Note: for pairs like ("5150","Peavey 5150") the shortform appears twice in
+    # the result (once as a prefix, once inside the canonical), so we assert on
+    # the canonical count rather than the shortform count.
+    pattern = f"{expected_short} {expected_full}"
+    assert pattern in result, (
+        f"expansion pattern {pattern!r} missing in {result!r}"
+    )
+    # The full canonical phrase must appear exactly once — no double-canonical.
+    canonical_count = len(re.findall(rf"\b{re.escape(expected_full)}\b", result, re.IGNORECASE))
+    assert canonical_count == 1, f"{expected_full!r} appears {canonical_count}x in {result!r}"
+
+
+def test_row_to_chunk_result_none_metadata():
+    """_row_to_chunk_result must not crash when metadata_json is None."""
+    from app.retrieval.base import _row_to_chunk_result
+
+    row = ("id-1", "doc-1", "forum", 0, "text here", None, 0.2)
+    result = _row_to_chunk_result(row)
+    assert result.source_name == "unknown"
+
+
 def test_load_alias_pairs_returns_14_tuples():
     """_load_alias_pairs() returns list of 14 (shortform, canonical) tuples."""
     from app.retrieval.aliases import _load_alias_pairs

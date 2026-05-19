@@ -95,7 +95,7 @@ def _row_to_chunk_result(row: tuple) -> ChunkResult:
     metadata_json, distance``.
     """
     chunk_id, document_id, source_type, chunk_index, chunk_text, metadata_json, distance = row
-    meta = json.loads(metadata_json) if isinstance(metadata_json, str) else metadata_json
+    meta = json.loads(metadata_json) if isinstance(metadata_json, str) else (metadata_json or {})
     source_name = meta.get("source_filename", "unknown")
     return ChunkResult(
         chunk_id=chunk_id,
