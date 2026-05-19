@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_plan
-last_updated: "2026-05-19T00:00:00.000Z"
+status: ready_to_execute
+last_updated: "2026-05-19T12:00:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 5
+  total_plans: 8
   completed_plans: 5
   percent: 100
 ---
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 | Phase | Name | Status |
 |-------|------|--------|
 | 1 | Schema, Forum Ingestion & Golden Eval Set | Complete (5/5 plans) |
-| 2 | Retrieval Layer & Gear Aliases | Not Started |
+| 2 | Retrieval Layer & Gear Aliases | Ready to Execute (3/3 plans written, verified) |
 | 3 | Grounded Generation & Minimal Chat UI | Not Started |
 | 4 | UI Polish — Knobs, Markdown, Follow-ups | Not Started |
 | 5 | Evaluation Harness & Grounding Quality | Not Started |
@@ -35,7 +35,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 
 **Phase 1 complete (2026-05-19).** All 5 plans shipped. 21 chunks from 10 forum posts embedded and stored in Postgres (pgvector/pg17 via Docker). Golden eval set authored and committed: `eval/golden_set.jsonl` (22 tuples) + `eval/HELD_OUT.md` (5 held-out tuples from 5 distinct topics: bb_king, eddie_van_halen, funk, lo_fi, mark_knopfler). D-11 audit statement locked at 2026-05-19T00:54:58+00:00. Infrastructure: Python 3.12 venv at `venv/`, Docker Compose at `docker-compose.yml` (pgvector/pgvector:pg17), `.env` with DATABASE_URL + OPENAI_API_KEY.
 
-**Phase 2 ready to plan.** Dependencies satisfied: chunks in DB, golden eval set locked, HELD_OUT.md committed before any retrieval tuning.
+**Phase 2 planned and verified (2026-05-19).** 3 plans written and plan-checker verified (all 12 dimensions passed). Wave 1: alias file + expansion module. Wave 2: HNSW retrieval function + ChunkResult envelope. Wave 3: full test suite. Requirements INGEST-07, RETR-01, RETR-02, RETR-03 all covered. Ready to execute.
 
 ## Decisions
 
@@ -48,6 +48,6 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 
 ## Session Continuity
 
-Last session: 2026-05-18
-Stopped at: Phase 2 context gathered. Ready to plan Phase 2.
-Resume file: .planning/phases/02-retrieval-layer-gear-aliases/02-CONTEXT.md
+Last session: 2026-05-19
+Stopped at: Phase 2 planned and verified. Ready to execute Phase 2.
+Resume file: .planning/phases/02-retrieval-layer-gear-aliases/02-01-PLAN.md
