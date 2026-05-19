@@ -25,11 +25,14 @@ class Settings(BaseSettings):
           factory will refuse to construct an OpenAI client without it.
         - ``embedding_model`` defaults to the 1536-d small model that matches the
           ``vector(1536)`` column in ``scripts/init_db.sql`` (D-06).
+        - ``debug`` enables EXPLAIN ANALYZE logging in retrieval when ``True``
+          (set ``DEBUG=true`` in the environment).
     """
 
     database_url: str = "postgresql://localhost:5432/guitar_tone_advisor"
     openai_api_key: str | None = None
     embedding_model: str = "text-embedding-3-small"
+    debug: bool = False
 
     model_config = SettingsConfigDict(
         env_file=".env",

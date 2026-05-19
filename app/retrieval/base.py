@@ -157,5 +157,16 @@ def retrieve(
     with _conn.cursor() as cur:
         cur.execute(_RETRIEVE_SQL, (query_vec, embedding_model, query_vec, k))
         rows = cur.fetchall()
+        # EXPLAIN ANALYZE debug logging — emits the query plan to stdout when
+        # Settings.debug is True (set DEBUG=true in the environment).
+        settings = get_settings()
+        if getattr(settings, "debug", False):
+            cur.execute(
+                "EXPLAIN ANALYZE " + _RETRIEVE_SQL,
+                (query_vec, embedding_model, query_vec, k),
+            )
+            plan_rows = cur.fetchall()
+            for plan_row in plan_rows:
+                print(plan_row[0])
 
     return [_row_to_chunk_result(row) for row in rows]

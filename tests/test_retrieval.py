@@ -326,6 +326,10 @@ def test_no_fstring_sql_in_base():
     assert offenders == [], f"f-string SQL found in base.py: {offenders}"
 
 
+# Alias required by 02-02-PLAN.md verification command.
+test_no_fstring_sql = test_no_fstring_sql_in_base
+
+
 def test_no_direct_openai_import():
     """No direct 'import openai' or 'from openai' in app/retrieval/ (CLAUDE.md)."""
     retrieval_dir = (
