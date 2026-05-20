@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In progress
-stopped_at: Phase 3 Plan 01 complete. Resume at 03-02-PLAN.md.
-last_updated: "2026-05-20T18:22:00.000Z"
+stopped_at: Phase 3 Plan 02 complete. Resume at 03-03-PLAN.md.
+last_updated: "2026-05-20T18:27:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 12
-  completed_plans: 9
-  percent: 43
+  completed_plans: 10
+  percent: 50
 ---
 
 # State: Guitar Tone Advisor
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 |-------|------|--------|
 | 1 | Schema, Forum Ingestion & Golden Eval Set | Complete (5/5 plans) |
 | 2 | Retrieval Layer & Gear Aliases | Complete (3/3 plans) |
-| 3 | Grounded Generation & Minimal Chat UI | In Progress (1/4 executed) |
+| 3 | Grounded Generation & Minimal Chat UI | In Progress (2/4 executed) |
 | 4 | UI Polish — Knobs, Markdown, Follow-ups | Not Started |
 | 5 | Evaluation Harness & Grounding Quality | Not Started |
 
@@ -44,6 +44,8 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 
 **Phase 3 Plan 01 complete (2026-05-20).** app/generation/ package created: __init__.py (empty), prompt.py (SYSTEM_PROMPT_TEXT + 3 D-13 grounding rules, build_system_blocks with cache_control ephemeral, build_sources_xml, build_messages), generator.py (stream_response async generator with _CITATION_RE module-level regex, session→tokens→citations SSE sequence, post-stream citation validation). app/config.py: anthropic_api_key field added. tests/test_generation.py: 9 offline unit tests, TDD RED→GREEN cycle. Full suite: 119 passed, 5 skipped. GEN-01 through GEN-07, CITE-02, CITE-03 implementation foundation complete.
 
+**Phase 3 Plan 02 complete (2026-05-20).** app/session.py created: module-level _sessions dict, threading.Lock() guard (T-03-06 mitigation), MAX_MESSAGES=20 (10 turn pairs per D-12), get_or_create_session() creates-if-absent returning live list view, append_turn() with del turns[:2] sliding window. tests/test_session.py: 3 offline unit tests with exact names from 03-VALIDATION.md. TDD RED→GREEN cycle confirmed. Full suite: 122 passed, 5 skipped. CHAT-02 implementation complete.
+
 ## Decisions
 
 - [Phase 1 Plan 01]: Project scaffold + Postgres/pgvector schema committed (commits 87d1ae2, 766f22d GREEN-test, 087c0e3). INGEST-04 / INGEST-05 marked complete. Settings.database_url gained a local default (`postgresql://localhost:5432/guitar_tone_advisor`) so the plan's own no-env smoke import succeeds without forcing the user to set `DATABASE_URL` first (Rule 3 fix; full rationale in 01-01-SUMMARY.md).
@@ -56,9 +58,10 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 - [Phase 2 Plan 02]: Settings.debug: bool = False added to app/config.py (plan done criteria). EXPLAIN ANALYZE debug logging wired into retrieve() — gated on settings.debug, prints plan rows to stdout. test_no_fstring_sql = test_no_fstring_sql_in_base alias added to tests/test_retrieval.py so plan's exact pytest verification command resolves. 7/7 plan verification tests pass. RETR-01, RETR-02, RETR-03 complete.
 - [Phase 2 Plan 03]: tests/test_retrieval.py finalized for plan 03 success criteria: import dataclasses added; test_chunk_result_is_frozen uses dataclasses.FrozenInstanceError (not (AttributeError, TypeError)); test_chunk_result_fields asserts exact 7-field set via dataclasses.fields(). Extra coverage tests from Plans 01/02 kept (case-insensitive expansion, count-one, no-match, empty-pairs, load-14-tuples, source-name mapping). Phase 2 complete.
 - [Phase 3 Plan 01]: SYSTEM_PROMPT_TEXT uses lowercase "cite it inline as [Sn]" (lowercase c) in grounding rule 1 to match the exact phrase the test_system_prompt_contains_grounding_rules test asserts from the D-13 requirement. asyncio.run() used for async test helpers (replaces deprecated asyncio.get_event_loop().run_until_complete() — Python 3.12 deprecation). build_sources_xml([]) returns "<sources>\n</sources>" two-line form for empty sources (signals corpus-silent refusal path to model). stream_response() is an async generator — all injectable dependencies are keyword-only; client= is required (no default) so tests must supply _FakeAnthropicClient explicitly (no get_anthropic_client() factory yet).
+- [Phase 3 Plan 02]: app/session.py uses a module-level dict + threading.Lock() (no nested lock acquisition). del turns[:2] always drops exactly 2 messages to preserve role alternation per D-12. get_or_create_session() returns a view into the live list (not a copy) — callers see appended turns without re-fetching. Test isolation via autouse _reset_sessions fixture (mirrors _reset_alias_cache pattern from test_retrieval.py). CHAT-02 complete.
 
 ## Session Continuity
 
 Last session: 2026-05-20
-Stopped at: Phase 3 Plan 01 complete. Generation module + Wave 0 test stubs committed.
-Resume file: .planning/phases/03-grounded-generation-minimal-chat-ui/03-02-PLAN.md
+Stopped at: Phase 3 Plan 02 complete. Session store + Wave 0 test stubs committed.
+Resume file: .planning/phases/03-grounded-generation-minimal-chat-ui/03-03-PLAN.md
