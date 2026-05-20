@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 3 UI-SPEC approved. Ready for /gsd-plan-phase 3.
-last_updated: "2026-05-19T22:00:00.000Z"
+status: Ready to execute
+stopped_at: Phase 3 planned (4 plans, 3 waves). Ready for /gsd-execute-phase 3.
+last_updated: "2026-05-20T00:00:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 8
+  total_plans: 12
   completed_plans: 8
   percent: 40
 ---
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 |-------|------|--------|
 | 1 | Schema, Forum Ingestion & Golden Eval Set | Complete (5/5 plans) |
 | 2 | Retrieval Layer & Gear Aliases | Complete (3/3 plans) |
-| 3 | Grounded Generation & Minimal Chat UI | Context Gathered |
+| 3 | Grounded Generation & Minimal Chat UI | Planned (0/4 executed) |
 | 4 | UI Polish — Knobs, Markdown, Follow-ups | Not Started |
 | 5 | Evaluation Harness & Grounding Quality | Not Started |
 
@@ -56,6 +56,6 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 
 ## Session Continuity
 
-Last session: 2026-05-19
-Stopped at: Phase 3 context gathered. Key decisions: claude-sonnet-4-6, Tailwind-only Next.js, Fetch+ReadableStream SSE, post-stream citation validation.
-Resume file: .planning/phases/03-grounded-generation-minimal-chat-ui/03-CONTEXT.md
+Last session: 2026-05-20
+Stopped at: Phase 3 fully planned. Resuming — proceeding to /gsd-execute-phase 3.
+Resume file: .planning/phases/03-grounded-generation-minimal-chat-ui/03-01-PLAN.md
