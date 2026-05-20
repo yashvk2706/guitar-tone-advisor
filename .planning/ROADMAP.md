@@ -1,7 +1,7 @@
 # Roadmap: Guitar Tone Advisor
 
 **Created:** 2026-05-15
-**Last updated:** 2026-05-19 (Phase 2 planned — 3 plans across 3 sequential waves)
+**Last updated:** 2026-05-19 (Phase 3 planned — 4 plans across 3 waves)
 **Granularity:** Standard
 **Project mode:** Vertical MVP — each phase ships an end-to-end working slice (or the smallest verifiable deliverable thereof)
 **Coverage:** 33/33 v1 requirements mapped (100%)
@@ -56,17 +56,18 @@ Plans:
 **Mode:** mvp
 **Depends on:** Phase 2
 **Requirements:** GEN-01, GEN-02, GEN-03, GEN-04, GEN-05, GEN-06, GEN-07, CHAT-01, CHAT-02, CHAT-03, CITE-01, CITE-02, CITE-03
+**Plans:** 4 plans across 3 waves
 **Success Criteria** (what must be TRUE):
   1. Asking "What amp settings did BB King use?" through the chat UI yields a streamed answer with at least one `[S{n}]` citation; clicking the citation opens a drawer showing the actual forum-post chunk text and a source-type label (`[Forum]`)
   2. The same query asked against an artificially empty retrieval result produces a refusal with a reason (e.g., "I don't have material on …") rather than a fabricated answer
   3. The answer contains concrete knob positions on a 0-10 scale and/or a signal-chain order when the cited chunks contain them; gear-translation phrasing appears when the user's described gear differs from the cited gear
   4. A "New chat" button clears the in-process session memory; subsequent messages have no recollection of prior turns
   5. Each answer renders a corpus-coverage indicator naming how many distinct sources support it (e.g., "3 sources agree")
-**Plans:**
-  - Plan 1: Anthropic generation module (system prompt with refusal example, `<sources>` XML injection, `[S{n}]` enforcement, temperature 0.0-0.2)
-  - Plan 2: FastAPI SSE chat endpoint (`POST /chat`, sse-starlette token stream, out-of-band `event: citations` payload, `GET /sources/{chunk_id}` for drawer hydration)
-  - Plan 3: In-process session memory (dict keyed by session_id, sliding-window turn drop, gear context in first user message as `<gear>` block)
-  - Plan 4: Minimal Next.js chat UI (input box, message list, streaming token render, clickable citation pill → drawer with source-type label and coverage indicator, "New chat" button)
+Plans:
+- [ ] 03-01-PLAN.md — `app/generation/` package: `prompt.py` (SYSTEM_PROMPT_TEXT, build_system_blocks, build_sources_xml, build_messages), `generator.py` (stream_response async generator, _CITATION_RE, post-stream validator); `app/config.py` + anthropic_api_key field; `tests/test_generation.py` Wave 0 stubs (9 tests); covers GEN-01 through GEN-07, CITE-02, CITE-03
+- [ ] 03-02-PLAN.md — `app/session.py` (in-process dict, threading.Lock, MAX_MESSAGES=20, get_or_create_session, append_turn with sliding window); `tests/test_session.py` Wave 0 stubs (3 tests); covers CHAT-02, CHAT-03
+- [ ] 03-03-PLAN.md — `app/main.py` FastAPI app: POST /chat (SSE stream, gear injection, retrieve→generate→session), GET /sources/{chunk_id} (drawer hydration, _SOURCES_SQL, get_conn per-request), GET /health; `tests/test_main.py` Wave 0 stubs (3 tests); covers GEN-07, CHAT-01, CHAT-02, CITE-01
+- [ ] 03-04-PLAN.md — `frontend/` Next.js App Router (TypeScript + Tailwind + lucide-react): `next.config.js` (/api/py/* rewrites), `hooks/useSSEStream.ts` (ReadableStream SSE parser), `components/ChatPage.tsx` (orchestration + state), `components/MessageBubble.tsx`, `components/CitationPill.tsx`, `components/CitationDrawer.tsx`, `components/CoverageIndicator.tsx`; human checkpoint; covers CHAT-01, CHAT-03, CITE-01, CITE-02, CITE-03
 **UI hint**: yes
 
 ### Phase 4: UI Polish — Knobs, Markdown, Follow-ups
@@ -108,7 +109,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Schema, Forum Ingestion & Golden Eval Set | 5/5 | Complete | 2026-05-19 |
 | 2. Retrieval Layer & Gear Aliases | 3/3 | Complete    | 2026-05-19 |
-| 3. Grounded Generation & Minimal Chat UI | 0/4 | Not started | - |
+| 3. Grounded Generation & Minimal Chat UI | 0/4 | Planned | - |
 | 4. UI Polish — Knobs, Markdown, Follow-ups | 0/4 | Not started | - |
 | 5. Evaluation Harness & Grounding Quality | 0/3 | Not started | - |
 
@@ -117,3 +118,4 @@ Plans:
 *Revision 2026-05-15: EVAL-01 moved from Phase 5 → Phase 1 (final plan) so the golden eval set is locked before any retrieval tuning. Phase 5 Plan 1 now loads the existing eval set rather than authoring it.*
 *Revision 2026-05-15: Phase 1 plan files finalized as `01-01-PLAN.md` through `01-05-PLAN.md`; SKELETON.md (Walking Skeleton) added; wave structure W1→W2→W3 (Plans 03+04 parallel)→W4 documented.*
 *Revision 2026-05-19: Phase 2 planned — 3 plans across 3 sequential waves. 02-01 alias file/expansion, 02-02 dense retrieval (ChunkResult + retrieve()), 02-03 test suite + static guards.*
+*Revision 2026-05-19: Phase 3 planned — 4 plans across 3 waves. W1: 03-01 (generation module + Wave 0 test stubs) + 03-02 (session memory + test stubs) in parallel; W2: 03-03 (FastAPI app + test stubs); W3: 03-04 (Next.js chat UI + human checkpoint).*
