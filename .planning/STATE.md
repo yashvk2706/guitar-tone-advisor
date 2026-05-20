@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In progress
-stopped_at: Phase 3 Plan 03 complete. Resume at 03-04-PLAN.md.
-last_updated: "2026-05-20T18:32:00.000Z"
+stopped_at: Phase 3 Plan 04 in progress — Tasks 1+2 complete, awaiting human-verify checkpoint.
+last_updated: "2026-05-20T18:40:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 2
@@ -48,6 +48,8 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 
 **Phase 3 Plan 03 complete (2026-05-20).** app/main.py created: FastAPI app with GET /health ({"status": "ok"}), POST /chat (SSE streaming, gear injection, session resolution, EventSourceResponse with ping=0), GET /sources/{chunk_id} (_SOURCES_SQL with %s::uuid, per-request get_conn(), source_name from metadata_json). tests/test_main.py: 3 tests (test_chat_endpoint_returns_event_stream with monkeypatch, test_get_source_returns_chunk_text live-DB gated, test_no_fstring_sql_in_main static scan). TDD RED→GREEN cycle confirmed. Full suite: 126 passed, 4 skipped. GEN-07, CHAT-01, CHAT-02, CITE-01 wired into HTTP layer.
 
+**Phase 3 Plan 04 Tasks 1+2 complete (2026-05-20).** Task 1 (commit 05b6ff3): Next.js 16.2.6 scaffold in frontend/ (App Router, TypeScript, Tailwind 4, lucide-react), next.config.js with /api/py/:path* → http://localhost:8000/:path* rewrite, clean layout.tsx (no Google Fonts, bg-zinc-950), thin page.tsx wrapping ChatPage. Task 2 (commit f82612e): 6 components + 1 hook created. useSSEStream.ts: ReadableStream SSE parser, /\r?\n\r?\n/ split, ":" comment skipping, session/token/citations/error/done callbacks. ChatPage.tsx: full React state orchestration, Enter-to-submit, auto-scroll, citation drawer fetch. MessageBubble.tsx: user/assistant/error variants with ▋ streaming cursor. CitationPill.tsx: blue [Sn] pills. CitationDrawer.tsx: right-side overlay with source-type badge colors. CoverageIndicator.tsx: "N sources agree" per UI-SPEC §6. npm run build passes with Node 22. No dangerouslySetInnerHTML (T-03-14 satisfied). Awaiting human-verify checkpoint. CHAT-01, CHAT-03, CITE-01, CITE-02, CITE-03 frontend layer complete.
+
 ## Decisions
 
 - [Phase 1 Plan 01]: Project scaffold + Postgres/pgvector schema committed (commits 87d1ae2, 766f22d GREEN-test, 087c0e3). INGEST-04 / INGEST-05 marked complete. Settings.database_url gained a local default (`postgresql://localhost:5432/guitar_tone_advisor`) so the plan's own no-env smoke import succeeds without forcing the user to set `DATABASE_URL` first (Rule 3 fix; full rationale in 01-01-SUMMARY.md).
@@ -66,5 +68,5 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 ## Session Continuity
 
 Last session: 2026-05-20
-Stopped at: Phase 3 Plan 03 complete. FastAPI app committed.
+Stopped at: Phase 3 Plan 04 Tasks 1+2 done — at checkpoint:human-verify. After approval, resume to finalize SUMMARY.md and state updates.
 Resume file: .planning/phases/03-grounded-generation-minimal-chat-ui/03-04-PLAN.md
