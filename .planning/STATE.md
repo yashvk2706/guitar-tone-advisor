@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In progress
-stopped_at: Phase 3 Plan 02 complete. Resume at 03-03-PLAN.md.
-last_updated: "2026-05-20T18:27:00.000Z"
+stopped_at: Phase 3 Plan 03 complete. Resume at 03-04-PLAN.md.
+last_updated: "2026-05-20T18:32:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 12
-  completed_plans: 10
-  percent: 50
+  completed_plans: 11
+  percent: 58
 ---
 
 # State: Guitar Tone Advisor
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 |-------|------|--------|
 | 1 | Schema, Forum Ingestion & Golden Eval Set | Complete (5/5 plans) |
 | 2 | Retrieval Layer & Gear Aliases | Complete (3/3 plans) |
-| 3 | Grounded Generation & Minimal Chat UI | In Progress (2/4 executed) |
+| 3 | Grounded Generation & Minimal Chat UI | In Progress (3/4 executed) |
 | 4 | UI Polish — Knobs, Markdown, Follow-ups | Not Started |
 | 5 | Evaluation Harness & Grounding Quality | Not Started |
 
@@ -46,6 +46,8 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 
 **Phase 3 Plan 02 complete (2026-05-20).** app/session.py created: module-level _sessions dict, threading.Lock() guard (T-03-06 mitigation), MAX_MESSAGES=20 (10 turn pairs per D-12), get_or_create_session() creates-if-absent returning live list view, append_turn() with del turns[:2] sliding window. tests/test_session.py: 3 offline unit tests with exact names from 03-VALIDATION.md. TDD RED→GREEN cycle confirmed. Full suite: 122 passed, 5 skipped. CHAT-02 implementation complete.
 
+**Phase 3 Plan 03 complete (2026-05-20).** app/main.py created: FastAPI app with GET /health ({"status": "ok"}), POST /chat (SSE streaming, gear injection, session resolution, EventSourceResponse with ping=0), GET /sources/{chunk_id} (_SOURCES_SQL with %s::uuid, per-request get_conn(), source_name from metadata_json). tests/test_main.py: 3 tests (test_chat_endpoint_returns_event_stream with monkeypatch, test_get_source_returns_chunk_text live-DB gated, test_no_fstring_sql_in_main static scan). TDD RED→GREEN cycle confirmed. Full suite: 126 passed, 4 skipped. GEN-07, CHAT-01, CHAT-02, CITE-01 wired into HTTP layer.
+
 ## Decisions
 
 - [Phase 1 Plan 01]: Project scaffold + Postgres/pgvector schema committed (commits 87d1ae2, 766f22d GREEN-test, 087c0e3). INGEST-04 / INGEST-05 marked complete. Settings.database_url gained a local default (`postgresql://localhost:5432/guitar_tone_advisor`) so the plan's own no-env smoke import succeeds without forcing the user to set `DATABASE_URL` first (Rule 3 fix; full rationale in 01-01-SUMMARY.md).
@@ -59,9 +61,10 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 - [Phase 2 Plan 03]: tests/test_retrieval.py finalized for plan 03 success criteria: import dataclasses added; test_chunk_result_is_frozen uses dataclasses.FrozenInstanceError (not (AttributeError, TypeError)); test_chunk_result_fields asserts exact 7-field set via dataclasses.fields(). Extra coverage tests from Plans 01/02 kept (case-insensitive expansion, count-one, no-match, empty-pairs, load-14-tuples, source-name mapping). Phase 2 complete.
 - [Phase 3 Plan 01]: SYSTEM_PROMPT_TEXT uses lowercase "cite it inline as [Sn]" (lowercase c) in grounding rule 1 to match the exact phrase the test_system_prompt_contains_grounding_rules test asserts from the D-13 requirement. asyncio.run() used for async test helpers (replaces deprecated asyncio.get_event_loop().run_until_complete() — Python 3.12 deprecation). build_sources_xml([]) returns "<sources>\n</sources>" two-line form for empty sources (signals corpus-silent refusal path to model). stream_response() is an async generator — all injectable dependencies are keyword-only; client= is required (no default) so tests must supply _FakeAnthropicClient explicitly (no get_anthropic_client() factory yet).
 - [Phase 3 Plan 02]: app/session.py uses a module-level dict + threading.Lock() (no nested lock acquisition). del turns[:2] always drops exactly 2 messages to preserve role alternation per D-12. get_or_create_session() returns a view into the live list (not a copy) — callers see appended turns without re-fetching. Test isolation via autouse _reset_sessions fixture (mirrors _reset_alias_cache pattern from test_retrieval.py). CHAT-02 complete.
+- [Phase 3 Plan 03]: per-request AsyncAnthropic client (never module-level) constructed inside route handler with HTTPException(500) if api_key is None. EventSourceResponse(event_gen(), ping=0) — ping=0 prevents sse-starlette ping comments causing frontend JSON.parse errors (Pitfall 2). User turn appended before EventSourceResponse; assistant turn appended inside event_gen() after stream_response exhausts. GET /sources/{chunk_id}: try/except around cur.execute to catch Postgres DataError on invalid UUID cast → 404. Monkeypatch-based TestClient test for SSE endpoint (no pytest-asyncio). GEN-07, CHAT-01, CITE-01 complete.
 
 ## Session Continuity
 
 Last session: 2026-05-20
-Stopped at: Phase 3 Plan 02 complete. Session store + Wave 0 test stubs committed.
-Resume file: .planning/phases/03-grounded-generation-minimal-chat-ui/03-03-PLAN.md
+Stopped at: Phase 3 Plan 03 complete. FastAPI app committed.
+Resume file: .planning/phases/03-grounded-generation-minimal-chat-ui/03-04-PLAN.md
