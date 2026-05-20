@@ -223,7 +223,7 @@ def test_stream_yields_session_event_first():
             events.append(sse)
         return events
 
-    events = asyncio.get_event_loop().run_until_complete(_collect())
+    events = asyncio.run(_collect())
     assert len(events) >= 1, "stream_response must yield at least one event"
     assert events[0].event == "session", (
         f"First event must have event='session', got {events[0].event!r}"
@@ -255,7 +255,7 @@ def test_stream_yields_citations_event_last():
             events.append(sse)
         return events
 
-    events = asyncio.get_event_loop().run_until_complete(_collect())
+    events = asyncio.run(_collect())
     assert len(events) >= 1, "stream_response must yield at least one event"
     assert events[-1].event == "citations", (
         f"Last event must have event='citations', got {events[-1].event!r}"
@@ -287,7 +287,7 @@ def test_citations_payload_includes_source_type():
             events.append(sse)
         return events
 
-    events = asyncio.get_event_loop().run_until_complete(_collect())
+    events = asyncio.run(_collect())
     citations_event = events[-1]
     assert citations_event.event == "citations", "Last event must be citations"
     payload = json.loads(citations_event.data)
@@ -327,7 +327,7 @@ def test_citation_count_equals_validated_sources():
             events.append(sse)
         return events
 
-    events = asyncio.get_event_loop().run_until_complete(_collect())
+    events = asyncio.run(_collect())
     citations_event = events[-1]
     payload = json.loads(citations_event.data)
     assert len(payload["sources"]) == 2, (

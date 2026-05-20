@@ -23,6 +23,8 @@ class Settings(BaseSettings):
         - ``database_url`` has no default — every deployment supplies it.
         - ``openai_api_key`` is optional in tests / local-only flows; the embedder
           factory will refuse to construct an OpenAI client without it.
+        - ``anthropic_api_key`` is optional in tests / local-only flows; the generation
+          module refuses to construct AsyncAnthropic without it.
         - ``embedding_model`` defaults to the 1536-d small model that matches the
           ``vector(1536)`` column in ``scripts/init_db.sql`` (D-06).
         - ``debug`` enables EXPLAIN ANALYZE logging in retrieval when ``True``
@@ -31,6 +33,7 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql://localhost:5432/guitar_tone_advisor"
     openai_api_key: str | None = None
+    anthropic_api_key: str | None = None
     embedding_model: str = "text-embedding-3-small"
     debug: bool = False
 
