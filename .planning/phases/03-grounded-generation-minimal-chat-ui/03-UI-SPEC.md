@@ -1,10 +1,11 @@
 ---
 phase: 3
 slug: grounded-generation-minimal-chat-ui
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-19
+reviewed_at: 2026-05-19
 ---
 
 # Phase 3 — UI Design Contract
@@ -125,6 +126,8 @@ Dark terminal palette. All colors map to Tailwind's zinc and slate scales to avo
 │  [textarea                         ] [Send →]   │
 └─────────────────────────────────────────────────┘
 ```
+
+**Primary visual anchor:** During streaming: the assistant message bubble and the animated `▋` cursor. At rest: the input textarea with its `ring-blue-500` focus ring.
 
 Tailwind layout classes for the page root:
 ```
@@ -335,7 +338,7 @@ for every recommendation.
 **Submit button:**
 - Tailwind: `ml-2 h-10 w-10 flex items-center justify-center rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none`
 - Icon: lucide-react `ArrowUp` (20px) — a common convention for "send" in modern chat UIs
-- Label: visually hidden `sr-only` text "Send message" for accessibility
+- Label: visually hidden `sr-only` text "Send message" for accessibility; add `title="Send message"` for sighted-user hover tooltip
 
 **Input bar layout:** `flex items-end gap-2`
 
@@ -492,14 +495,14 @@ No confirmation dialog. No backend call. The old session persists in FastAPI mem
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS (2 non-blocking FLAGs resolved — focal point declared, button title added)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-05-19
 
 ---
 
