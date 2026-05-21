@@ -1,7 +1,7 @@
 ---
 phase: 4
 slug: ui-polish-knobs-markdown-follow-ups
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-21
@@ -63,7 +63,7 @@ All values are Tailwind 4 utility classes mapped to the 8-point scale. Establish
 | Role | Size | Weight | Line Height | Tailwind | Usage |
 |------|------|--------|-------------|---------|-------|
 | Body | 14px | 400 (regular) | 1.5 (relaxed) | `text-sm leading-relaxed` | Message bubble text, drawer text |
-| Label | 12px | 500 (medium) | 1.4 | `text-xs font-medium` | Citation pills, badges, loading indicator, knob labels, follow-up buttons |
+| Label | 12px | 600 (semibold) | 1.4 | `text-xs font-semibold` | Citation pills, badges, loading indicator, knob labels, follow-up buttons |
 | Heading | 14px | 600 (semibold) | 1.25 | `text-sm font-semibold` | Header title ("Guitar Tone Advisor"), error label |
 | Mono | 12px | 400 (regular) | 1.5 (relaxed) | `text-xs font-mono leading-relaxed` | Drawer chunk text, citation pill IDs |
 
@@ -77,9 +77,9 @@ react-markdown renders semantic HTML elements. Because the project uses Tailwind
 | `*italic*` | `<em>` | `italic text-zinc-200` |
 | `# H1` | `<h1>` | `text-base font-semibold text-zinc-50 mt-3 mb-1` |
 | `## H2` | `<h2>` | `text-sm font-semibold text-zinc-200 mt-3 mb-1` |
-| `### H3` | `<h3>` | `text-sm font-medium text-zinc-300 mt-2 mb-1` |
-| `- item` / `* item` | `<ul><li>` | `ul: list-disc list-inside space-y-0.5 my-1 text-sm`; `li: text-zinc-200` |
-| `1. item` | `<ol><li>` | `ol: list-decimal list-inside space-y-0.5 my-1 text-sm`; `li: text-zinc-200` |
+| `### H3` | `<h3>` | `text-sm font-semibold text-zinc-300 mt-2 mb-1` |
+| `- item` / `* item` | `<ul><li>` | `ul: list-disc list-inside space-y-1 my-1 text-sm`; `li: text-zinc-200` |
+| `1. item` | `<ol><li>` | `ol: list-decimal list-inside space-y-1 my-1 text-sm`; `li: text-zinc-200` |
 | `` `code` `` | `<code>` | `font-mono text-xs bg-zinc-800 text-emerald-300 px-1 rounded` |
 | ```` ```block``` ```` | `<pre><code>` | `pre: bg-zinc-800 rounded-lg p-3 overflow-x-auto my-2`; `code: font-mono text-xs text-emerald-300 leading-relaxed` |
 | `> blockquote` | `<blockquote>` | `border-l-2 border-zinc-600 pl-3 text-zinc-400 italic my-1` |
@@ -336,7 +336,7 @@ interface FollowUpRailProps {
     <button
       key={label}
       onClick={() => onSubmit(label)}
-      className="h-7 px-3 rounded-full text-xs font-medium bg-zinc-800 text-zinc-400 border border-zinc-700 hover:bg-zinc-700 hover:text-zinc-50 hover:border-zinc-600 transition-colors focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-offset-1 focus:ring-offset-zinc-950"
+      className="h-7 px-3 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700 hover:bg-zinc-700 hover:text-zinc-50 hover:border-zinc-600 transition-colors focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-offset-1 focus:ring-offset-zinc-950"
     >
       {label}
     </button>
@@ -476,14 +476,14 @@ Copy button uses `opacity-0 group-hover:opacity-100` on the parent `group`. On t
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS — all CTAs specific (verb+noun), empty/error states have solution paths
+- [x] Dimension 2 Visuals: PASS — hierarchy derivable from color contract; icon-only actions have title/sr-only labels
+- [x] Dimension 3 Color: PASS — 60/30/10 declared; accent reserved-for list bounded (5 named elements); destructive declared
+- [x] Dimension 4 Typography: PASS — 2 weights (400, 600); 4 sizes (10/12/14/16px); body line-height declared
+- [x] Dimension 5 Spacing: PASS — all values multiples of 4; exceptions justified
+- [x] Dimension 6 Registry Safety: PASS — no shadcn third-party registries; react-markdown is standard npm
 
-**Approval:** pending
+**Approval:** VERIFIED — 2026-05-21
 
 ---
 
