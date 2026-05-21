@@ -20,6 +20,7 @@ export default function ChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Auto-resize textarea up to max-h-[200px]
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -92,6 +93,9 @@ export default function ChatPage() {
     ]);
     setIsStreaming(true);
 
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     await streamChat(
       message,
       sessionId,
@@ -145,6 +149,7 @@ export default function ChatPage() {
         setIsStreaming(false);
         textareaRef.current?.focus();
       },
+      abortController.signal,
     );
   }, [inputValue, isStreaming, sessionId]);
 
@@ -158,8 +163,10 @@ export default function ChatPage() {
     }
   };
 
-  // New Chat: reset all state
+  // New Chat: abort any in-flight stream, then reset all state
   const handleNewChat = () => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
     setSessionId(null);
     setMessages([]);
     setDrawer(null);

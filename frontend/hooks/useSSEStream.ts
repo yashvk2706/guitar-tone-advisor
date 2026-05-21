@@ -23,6 +23,7 @@ export async function streamChat(
   onCitations: CitationsCallback,
   onError: ErrorCallback,
   onDone: () => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   let response: Response;
   try {
@@ -30,8 +31,14 @@ export async function streamChat(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ session_id: sessionId, message, gear }),
+      signal,
     });
   } catch (err) {
+    // AbortError means the caller cancelled — return silently
+    if (err instanceof Error && err.name === 'AbortError') {
+      onDone();
+      return;
+    }
     onError(err instanceof Error ? err : new Error('Network error'));
     onDone();
     return;
@@ -80,8 +87,8 @@ export async function streamChat(
         try {
           parsed = JSON.parse(dataLine) as Record<string, unknown>;
         } catch {
-          // Malformed JSON — T-03-11 mitigation: trigger error callback
-          onError(new Error(`Malformed SSE data: ${dataLine}`));
+          // Malformed JSON — skip silently; calling onError here would
+          // prematurely set isStreaming=false while the stream is still active
           continue;
         }
 
@@ -102,7 +109,12 @@ export async function streamChat(
       }
     }
   } catch (err) {
-    onError(err instanceof Error ? err : new Error('Stream read error'));
+    // AbortError means the caller cancelled — return silently without onError
+    if (err instanceof Error && err.name === 'AbortError') {
+      // fall through to finally/onDone
+    } else {
+      onError(err instanceof Error ? err : new Error('Stream read error'));
+    }
   } finally {
     reader.releaseLock();
     onDone();
