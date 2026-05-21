@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In progress
-stopped_at: Phase 4 context gathered
-last_updated: "2026-05-21T20:48:04.796Z"
+stopped_at: Phase 4 planned — Ready to execute
+last_updated: "2026-05-21T21:15:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 12
+  total_plans: 16
   completed_plans: 12
   percent: 60
 ---
@@ -70,4 +70,4 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 
 Last session: 2026-05-21T20:48:04.793Z
 Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-ui-polish-knobs-markdown-follow-ups/04-CONTEXT.md
+Resume file: .planning/phases/04-ui-polish-knobs-markdown-follow-ups/04-UI-SPEC.md
