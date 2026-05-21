@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     """Runtime configuration sourced from environment variables / .env file.
 
     Notes:
-        - ``database_url`` has no default — every deployment supplies it.
+        - ``database_url`` defaults to ``postgresql://localhost:5432/guitar_tone_advisor``
+          for local development. Production deployments must override via DATABASE_URL.
         - ``openai_api_key`` is optional in tests / local-only flows; the embedder
           factory will refuse to construct an OpenAI client without it.
         - ``anthropic_api_key`` is optional in tests / local-only flows; the generation
