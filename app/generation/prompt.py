@@ -17,6 +17,8 @@ Security constraints (CLAUDE.md):
 
 from __future__ import annotations
 
+from xml.sax.saxutils import escape, quoteattr
+
 from app.retrieval.base import ChunkResult
 
 
@@ -104,9 +106,9 @@ def build_sources_xml(sources: list[ChunkResult]) -> str:
     parts = ["<sources>"]
     for i, chunk in enumerate(sources, start=1):
         parts.append(
-            f'  <source id="S{i}" type="{chunk.source_type}" name="{chunk.source_name}">'
+            f"  <source id=\"S{i}\" type={quoteattr(chunk.source_type)} name={quoteattr(chunk.source_name)}>"
         )
-        parts.append(f"    {chunk.text}")
+        parts.append(f"    {escape(chunk.text)}")
         parts.append("  </source>")
     parts.append("</sources>")
     return "\n".join(parts)
