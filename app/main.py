@@ -15,6 +15,7 @@ CLAUDE.md hard constraints honored here:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import uuid
@@ -118,8 +119,9 @@ async def chat(req: ChatRequest):
     else:
         user_content = req.message
 
-    # 3. Retrieve relevant chunks
-    sources = retrieve(user_content, k=8)
+    # 3. Retrieve relevant chunks — offload blocking IO to thread pool
+    loop = asyncio.get_event_loop()
+    sources = await loop.run_in_executor(None, retrieve, user_content, 8)
 
     # 4. Build prompt
     messages = build_messages(session["turns"], user_content, sources)
