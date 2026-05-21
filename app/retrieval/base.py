@@ -144,6 +144,7 @@ def retrieve(
         distance (best match first).
     """
     _conn = conn or get_conn()
+    _should_close = conn is None  # only close if we opened it
     _embedder = embedder or get_embedder()
     embedding_model = get_settings().embedding_model
 
@@ -154,19 +155,23 @@ def retrieve(
     # required (unlike INSERT where the column type provides the cast).
     query_vec = Vector(_embedder.embed_query(expanded))
 
-    with _conn.cursor() as cur:
-        cur.execute(_RETRIEVE_SQL, (query_vec, embedding_model, query_vec, k))
-        rows = cur.fetchall()
-        # EXPLAIN ANALYZE debug logging — emits the query plan to stdout when
-        # Settings.debug is True (set DEBUG=true in the environment).
-        settings = get_settings()
-        if getattr(settings, "debug", False):
-            cur.execute(
-                "EXPLAIN ANALYZE " + _RETRIEVE_SQL,
-                (query_vec, embedding_model, query_vec, k),
-            )
-            plan_rows = cur.fetchall()
-            for plan_row in plan_rows:
-                print(plan_row[0])
+    try:
+        with _conn.cursor() as cur:
+            cur.execute(_RETRIEVE_SQL, (query_vec, embedding_model, query_vec, k))
+            rows = cur.fetchall()
+            # EXPLAIN ANALYZE debug logging — emits the query plan to stdout when
+            # Settings.debug is True (set DEBUG=true in the environment).
+            settings = get_settings()
+            if getattr(settings, "debug", False):
+                cur.execute(
+                    "EXPLAIN ANALYZE " + _RETRIEVE_SQL,
+                    (query_vec, embedding_model, query_vec, k),
+                )
+                plan_rows = cur.fetchall()
+                for plan_row in plan_rows:
+                    print(plan_row[0])
 
-    return [_row_to_chunk_result(row) for row in rows]
+        return [_row_to_chunk_result(row) for row in rows]
+    finally:
+        if _should_close:
+            _conn.close()
