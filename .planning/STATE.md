@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In progress
-stopped_at: Phase 3 Plan 04 in progress — Tasks 1+2 complete, awaiting human-verify checkpoint.
-last_updated: "2026-05-20T18:40:00.000Z"
+stopped_at: Phase 3 complete (4/4 plans). Ready to begin Phase 4 — UI Polish.
+last_updated: "2026-05-21T00:00:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 12
-  completed_plans: 11
-  percent: 58
+  completed_plans: 12
+  percent: 63
 ---
 
 # State: Guitar Tone Advisor
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 |-------|------|--------|
 | 1 | Schema, Forum Ingestion & Golden Eval Set | Complete (5/5 plans) |
 | 2 | Retrieval Layer & Gear Aliases | Complete (3/3 plans) |
-| 3 | Grounded Generation & Minimal Chat UI | In Progress (3/4 executed) |
+| 3 | Grounded Generation & Minimal Chat UI | Complete (4/4 plans) |
 | 4 | UI Polish — Knobs, Markdown, Follow-ups | Not Started |
 | 5 | Evaluation Harness & Grounding Quality | Not Started |
 
@@ -48,7 +48,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 
 **Phase 3 Plan 03 complete (2026-05-20).** app/main.py created: FastAPI app with GET /health ({"status": "ok"}), POST /chat (SSE streaming, gear injection, session resolution, EventSourceResponse with ping=0), GET /sources/{chunk_id} (_SOURCES_SQL with %s::uuid, per-request get_conn(), source_name from metadata_json). tests/test_main.py: 3 tests (test_chat_endpoint_returns_event_stream with monkeypatch, test_get_source_returns_chunk_text live-DB gated, test_no_fstring_sql_in_main static scan). TDD RED→GREEN cycle confirmed. Full suite: 126 passed, 4 skipped. GEN-07, CHAT-01, CHAT-02, CITE-01 wired into HTTP layer.
 
-**Phase 3 Plan 04 Tasks 1+2 complete (2026-05-20).** Task 1 (commit 05b6ff3): Next.js 16.2.6 scaffold in frontend/ (App Router, TypeScript, Tailwind 4, lucide-react), next.config.js with /api/py/:path* → http://localhost:8000/:path* rewrite, clean layout.tsx (no Google Fonts, bg-zinc-950), thin page.tsx wrapping ChatPage. Task 2 (commit f82612e): 6 components + 1 hook created. useSSEStream.ts: ReadableStream SSE parser, /\r?\n\r?\n/ split, ":" comment skipping, session/token/citations/error/done callbacks. ChatPage.tsx: full React state orchestration, Enter-to-submit, auto-scroll, citation drawer fetch. MessageBubble.tsx: user/assistant/error variants with ▋ streaming cursor. CitationPill.tsx: blue [Sn] pills. CitationDrawer.tsx: right-side overlay with source-type badge colors. CoverageIndicator.tsx: "N sources agree" per UI-SPEC §6. npm run build passes with Node 22. No dangerouslySetInnerHTML (T-03-14 satisfied). Awaiting human-verify checkpoint. CHAT-01, CHAT-03, CITE-01, CITE-02, CITE-03 frontend layer complete.
+**Phase 3 Plan 04 complete (2026-05-20).** Task 1 (commit 05b6ff3): Next.js 16.2.6 scaffold in frontend/ (App Router, TypeScript, Tailwind 4, lucide-react), next.config.js with /api/py/:path* → http://localhost:8000/:path* rewrite, clean layout.tsx (no Google Fonts, bg-zinc-950), thin page.tsx wrapping ChatPage. Task 2 (commit f82612e): 6 components + 1 hook created. useSSEStream.ts: ReadableStream SSE parser, /\r?\n\r?\n/ split, ":" comment skipping, session/token/citations/error/done callbacks. ChatPage.tsx: full React state orchestration, Enter-to-submit, auto-scroll, citation drawer fetch. MessageBubble.tsx: user/assistant/error variants with ▋ streaming cursor. CitationPill.tsx: blue [Sn] pills. CitationDrawer.tsx: right-side overlay with source-type badge colors. CoverageIndicator.tsx: "N sources agree" per UI-SPEC §6. npm run build passes with Node 22. No dangerouslySetInnerHTML (T-03-14 satisfied). Human-verify checkpoint: all 9 checks passed. Phase 3 complete. CHAT-01, CHAT-03, CITE-01, CITE-02, CITE-03 frontend layer complete.
 
 ## Decisions
 
@@ -64,9 +64,10 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 - [Phase 3 Plan 01]: SYSTEM_PROMPT_TEXT uses lowercase "cite it inline as [Sn]" (lowercase c) in grounding rule 1 to match the exact phrase the test_system_prompt_contains_grounding_rules test asserts from the D-13 requirement. asyncio.run() used for async test helpers (replaces deprecated asyncio.get_event_loop().run_until_complete() — Python 3.12 deprecation). build_sources_xml([]) returns "<sources>\n</sources>" two-line form for empty sources (signals corpus-silent refusal path to model). stream_response() is an async generator — all injectable dependencies are keyword-only; client= is required (no default) so tests must supply _FakeAnthropicClient explicitly (no get_anthropic_client() factory yet).
 - [Phase 3 Plan 02]: app/session.py uses a module-level dict + threading.Lock() (no nested lock acquisition). del turns[:2] always drops exactly 2 messages to preserve role alternation per D-12. get_or_create_session() returns a view into the live list (not a copy) — callers see appended turns without re-fetching. Test isolation via autouse _reset_sessions fixture (mirrors _reset_alias_cache pattern from test_retrieval.py). CHAT-02 complete.
 - [Phase 3 Plan 03]: per-request AsyncAnthropic client (never module-level) constructed inside route handler with HTTPException(500) if api_key is None. EventSourceResponse(event_gen(), ping=0) — ping=0 prevents sse-starlette ping comments causing frontend JSON.parse errors (Pitfall 2). User turn appended before EventSourceResponse; assistant turn appended inside event_gen() after stream_response exhausts. GET /sources/{chunk_id}: try/except around cur.execute to catch Postgres DataError on invalid UUID cast → 404. Monkeypatch-based TestClient test for SSE endpoint (no pytest-asyncio). GEN-07, CHAT-01, CITE-01 complete.
+- [Phase 3 Plan 04]: SSE frame splitting uses /\r?\n\r?\n/ — sse-starlette 3.4.4 emits CRLF separators; splitting on \n\n alone would drop frames. Lines starting with ":" skipped to prevent JSON.parse errors from ping comments (Pitfall 2). Citation pills rendered only after event:citations fires (D-08 hard rule — absent from DOM during streaming). New Chat is client-only: setSessionId(null)+setMessages([]) with no backend call (D-17). chunk_text rendered as JSX text node, never dangerouslySetInnerHTML (T-03-14 satisfied). CommonJS module.exports used for next.config.js (Next.js 15/16 config format compatibility). gear=null sent on all Phase 3 turns — user describes gear in plain text. CHAT-01, CHAT-03, CITE-01, CITE-02, CITE-03 frontend layer complete. Phase 3 complete.
 
 ## Session Continuity
 
-Last session: 2026-05-20
-Stopped at: Phase 3 Plan 04 Tasks 1+2 done — at checkpoint:human-verify. After approval, resume to finalize SUMMARY.md and state updates.
-Resume file: .planning/phases/03-grounded-generation-minimal-chat-ui/03-04-PLAN.md
+Last session: 2026-05-21
+Stopped at: Phase 3 complete — 4/4 plans shipped. End-to-end chat UI verified. Ready to begin Phase 4 (UI Polish — Knobs, Markdown, Follow-ups).
+Resume file: None — phase boundary.

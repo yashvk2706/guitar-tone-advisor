@@ -10,7 +10,7 @@
 
 - [x] **Phase 1: Schema, Forum Ingestion & Golden Eval Set** — Migrate Postgres + pgvector, build forum-only CLI ingestion pipeline, and author the held-out golden eval set before any retrieval tuning
 - [x] **Phase 2: Retrieval Layer & Gear Aliases** — Wire HNSW cosine retrieval through the Embedder Protocol with bidirectional gear-alias query expansion
-- [ ] **Phase 3: Grounded Generation & Minimal Chat UI** — End-to-end SSE-streamed answers with inline `[S{n}]` citations rendered in a minimal Next.js chat
+- [x] **Phase 3: Grounded Generation & Minimal Chat UI** — End-to-end SSE-streamed answers with inline `[S{n}]` citations rendered in a minimal Next.js chat
 - [ ] **Phase 4: UI Polish — Knobs, Markdown, Follow-ups** — Add rotary-knob settings, Markdown rendering, follow-up buttons, copy-to-clipboard, loading states, session history
 - [ ] **Phase 5: Evaluation Harness & Grounding Quality** — Score against the existing golden eval set (recall@K / MRR), empty-context refusal smoke test, RAGAS faithfulness
 
@@ -67,7 +67,7 @@ Plans:
 - [x] 03-01-PLAN.md — `app/generation/` package: `prompt.py` (SYSTEM_PROMPT_TEXT, build_system_blocks, build_sources_xml, build_messages), `generator.py` (stream_response async generator, _CITATION_RE, post-stream validator); `app/config.py` + anthropic_api_key field; `tests/test_generation.py` Wave 0 stubs (9 tests); covers GEN-01 through GEN-07, CITE-02, CITE-03
 - [x] 03-02-PLAN.md — `app/session.py` (in-process dict, threading.Lock, MAX_MESSAGES=20, get_or_create_session, append_turn with sliding window); `tests/test_session.py` Wave 0 stubs (3 tests); covers CHAT-02, CHAT-03
 - [x] 03-03-PLAN.md — `app/main.py` FastAPI app: POST /chat (SSE stream, gear injection, retrieve→generate→session), GET /sources/{chunk_id} (drawer hydration, _SOURCES_SQL, get_conn per-request), GET /health; `tests/test_main.py` Wave 0 stubs (3 tests); covers GEN-07, CHAT-01, CHAT-02, CITE-01
-- [ ] 03-04-PLAN.md — `frontend/` Next.js App Router (TypeScript + Tailwind + lucide-react): `next.config.js` (/api/py/* rewrites), `hooks/useSSEStream.ts` (ReadableStream SSE parser), `components/ChatPage.tsx` (orchestration + state), `components/MessageBubble.tsx`, `components/CitationPill.tsx`, `components/CitationDrawer.tsx`, `components/CoverageIndicator.tsx`; human checkpoint; covers CHAT-01, CHAT-03, CITE-01, CITE-02, CITE-03
+- [x] 03-04-PLAN.md — `frontend/` Next.js App Router (TypeScript + Tailwind + lucide-react): `next.config.js` (/api/py/* rewrites), `hooks/useSSEStream.ts` (ReadableStream SSE parser), `components/ChatPage.tsx` (orchestration + state), `components/MessageBubble.tsx`, `components/CitationPill.tsx`, `components/CitationDrawer.tsx`, `components/CoverageIndicator.tsx`; human checkpoint; covers CHAT-01, CHAT-03, CITE-01, CITE-02, CITE-03
 **UI hint**: yes
 
 ### Phase 4: UI Polish — Knobs, Markdown, Follow-ups
@@ -109,7 +109,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Schema, Forum Ingestion & Golden Eval Set | 5/5 | Complete | 2026-05-19 |
 | 2. Retrieval Layer & Gear Aliases | 3/3 | Complete    | 2026-05-19 |
-| 3. Grounded Generation & Minimal Chat UI | 3/4 | In Progress | - |
+| 3. Grounded Generation & Minimal Chat UI | 4/4 | Complete    | 2026-05-20 |
 | 4. UI Polish — Knobs, Markdown, Follow-ups | 0/4 | Not started | - |
 | 5. Evaluation Harness & Grounding Quality | 0/3 | Not started | - |
 
