@@ -71,3 +71,25 @@ def test_sliding_window_drops_oldest_pair():
         f"expected {MAX_MESSAGES} turns after sliding window, "
         f"got {len(session['turns'])}"
     )
+
+
+def test_sliding_window_odd_append_converges():
+    """Sliding window with an odd (MAX_MESSAGES+1) total appends must converge
+    to MAX_MESSAGES-1 turns (the last append pushes to MAX+1, while loop drops
+    2 leaving MAX-1). This catches the former if->while oscillation bug."""
+    from app.session import MAX_MESSAGES, append_turn, get_or_create_session
+
+    sid = "window-odd-test-id"
+    get_or_create_session(sid)
+
+    # Append MAX_MESSAGES + 1 turns — odd count, exercises the while-loop path
+    roles = ["user", "assistant"]
+    for i in range(MAX_MESSAGES + 1):
+        append_turn(sid, roles[i % 2], f"message {i}")
+
+    session = get_or_create_session(sid)
+    # MAX+1 appended → while drops 2 → MAX-1 remain
+    assert len(session["turns"]) == MAX_MESSAGES - 1, (
+        f"expected {MAX_MESSAGES - 1} turns after odd append, "
+        f"got {len(session['turns'])}"
+    )

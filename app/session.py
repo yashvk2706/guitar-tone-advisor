@@ -86,6 +86,9 @@ def append_turn(session_id: str, role: str, content: str) -> None:
     with _lock:
         turns = _sessions.setdefault(session_id, [])
         turns.append({"role": role, "content": content})
-        # Sliding window: always drop exactly 2 to preserve role alternation.
-        if len(turns) > MAX_MESSAGES:
+        # Sliding window: drop oldest pair until within budget (preserves role
+        # alternation — always drops 2 at a time). Using while instead of if
+        # ensures the window converges to exactly MAX_MESSAGES regardless of
+        # how many turns were appended in a single call.
+        while len(turns) > MAX_MESSAGES:
             del turns[:2]
