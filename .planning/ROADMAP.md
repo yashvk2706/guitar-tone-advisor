@@ -1,7 +1,7 @@
 # Roadmap: Guitar Tone Advisor
 
 **Created:** 2026-05-15
-**Last updated:** 2026-05-21 (Phase 3 complete — 4/4 plans shipped)
+**Last updated:** 2026-05-21 (Phase 4 planned — 4 plans across 3 waves)
 **Granularity:** Standard
 **Project mode:** Vertical MVP — each phase ships an end-to-end working slice (or the smallest verifiable deliverable thereof)
 **Coverage:** 33/33 v1 requirements mapped (100%)
@@ -75,6 +75,7 @@ Plans:
 **Mode:** mvp
 **Depends on:** Phase 3
 **Requirements:** CHAT-04, UI-01, UI-02, UI-03, UI-04, UI-05
+**Plans:** 4 plans across 3 waves
 **Success Criteria** (what must be TRUE):
   1. Markdown in the model's output (bold, bulleted lists, fenced code) renders correctly in the browser
   2. When the answer contains knob settings (e.g., "Bass=7, Mid=4, Treble=6"), each setting renders as a visual rotary-knob component turned to the correct position with the numeric value labeled beneath
@@ -82,11 +83,11 @@ Plans:
   4. A single "Copy" button on each recommendation block copies the amp/pedal settings to the system clipboard
   5. While a response is generating, the UI shows a labeled progress indicator that transitions ("Searching corpus..." → "Drafting...")
   6. Three suggested follow-up buttons ("Cleaner?", "Live setting?", "Budget version?") appear under each answer and, when clicked, submit the corresponding follow-up turn
-**Plans:**
-  - Plan 1: Markdown renderer + recommendation-block isolation (react-markdown or equivalent; identify the settings section for the copy button)
-  - Plan 2: Rotary-knob component (SVG knob, 0-10 scale, value label, parser that extracts `Knob=N` patterns from the answer)
-  - Plan 3: Conversation surface polish (scrollable history pane, copy-to-clipboard handler, loading-state state machine wired to the SSE event lifecycle)
-  - Plan 4: Follow-up button rail (three fixed prompts under each assistant message, submitting the canonical follow-up text on click)
+Plans:
+- [ ] 04-01-PLAN.md — react-markdown@10.1.0 install + MARKDOWN_COMPONENTS wired into MessageBubble; streaming cursor moved to outer bubble wrapper; npm run build passes [W1; UI-01, UI-02]
+- [ ] 04-02-PLAN.md — parseKnobs.ts (regex extractor, last-value-wins, 0–10 range filter) + RotaryKnob.tsx (inline SVG, 270° arc, zinc colors) + knob row in MessageBubble behind D-08 post-stream gate [W2; UI-05]
+- [ ] 04-03-PLAN.md — streamPhase state machine in ChatPage (idle→searching→drafting→idle) + loadingLabel prop to MessageBubble + copy button (opacity-0 group-hover, navigator.clipboard, 2s Check feedback) [W2; UI-02, UI-03, UI-04]
+- [ ] 04-04-PLAN.md — FollowUpRail.tsx (three fixed buttons) + isLatestAssistant + onFollowUp wired through MessageBubble and ChatPage; final npm run build [W3; CHAT-04]
 **UI hint**: yes
 
 ### Phase 5: Evaluation Harness & Grounding Quality
@@ -119,3 +120,4 @@ Plans:
 *Revision 2026-05-15: Phase 1 plan files finalized as `01-01-PLAN.md` through `01-05-PLAN.md`; SKELETON.md (Walking Skeleton) added; wave structure W1→W2→W3 (Plans 03+04 parallel)→W4 documented.*
 *Revision 2026-05-19: Phase 2 planned — 3 plans across 3 sequential waves. 02-01 alias file/expansion, 02-02 dense retrieval (ChunkResult + retrieve()), 02-03 test suite + static guards.*
 *Revision 2026-05-19: Phase 3 planned — 4 plans across 3 waves. W1: 03-01 (generation module + Wave 0 test stubs) + 03-02 (session memory + test stubs) in parallel; W2: 03-03 (FastAPI app + test stubs); W3: 03-04 (Next.js chat UI + human checkpoint).*
+*Revision 2026-05-21: Phase 4 planned — 4 plans across 3 waves. W1: 04-01 (react-markdown); W2: 04-02 (rotary knobs) + 04-03 (loading state + copy button) in parallel; W3: 04-04 (follow-up rail). All 6 requirements covered: CHAT-04, UI-01 through UI-05.*
