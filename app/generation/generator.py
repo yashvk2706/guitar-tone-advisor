@@ -25,6 +25,7 @@ from collections.abc import AsyncIterator
 from anthropic import AsyncAnthropic
 from sse_starlette.event import ServerSentEvent
 
+from app.config import get_settings
 from app.retrieval.base import ChunkResult
 
 
@@ -84,7 +85,7 @@ async def stream_response(
     # 2. Stream tokens — accumulate in parallel with yielding (Pitfall 5 prevention:
     #    citation regex does NOT run here; only appends to full_response list)
     async with client.messages.stream(
-        model="claude-sonnet-4-6",
+        model=get_settings().anthropic_model,
         max_tokens=1024,
         system=system_blocks,
         messages=messages,

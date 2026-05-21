@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
     embedding_model: str = "text-embedding-3-small"
+    anthropic_model: str = "claude-sonnet-4-6"
     debug: bool = False
 
     model_config = SettingsConfigDict(
