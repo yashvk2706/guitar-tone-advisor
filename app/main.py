@@ -22,7 +22,7 @@ import uuid
 
 from anthropic import AsyncAnthropic
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sse_starlette.event import ServerSentEvent
 from sse_starlette.sse import EventSourceResponse
 
@@ -65,6 +65,16 @@ class ChatRequest(BaseModel):
     session_id: str | None = None
     message: str
     gear: dict | None = None  # only on first turn
+
+    @field_validator("message")
+    @classmethod
+    def message_not_empty_or_too_long(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("message must not be empty")
+        if len(v) > 4000:
+            raise ValueError("message too long (max 4000 chars)")
+        return v
 
 
 # ---------------------------------------------------------------------------
