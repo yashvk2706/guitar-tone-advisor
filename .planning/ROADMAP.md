@@ -1,7 +1,7 @@
 # Roadmap: Guitar Tone Advisor
 
 **Created:** 2026-05-15
-**Last updated:** 2026-05-19 (Phase 3 planned — 4 plans across 3 waves)
+**Last updated:** 2026-05-21 (Phase 3 complete — 4/4 plans shipped)
 **Granularity:** Standard
 **Project mode:** Vertical MVP — each phase ships an end-to-end working slice (or the smallest verifiable deliverable thereof)
 **Coverage:** 33/33 v1 requirements mapped (100%)
@@ -56,7 +56,7 @@ Plans:
 **Mode:** mvp
 **Depends on:** Phase 2
 **Requirements:** GEN-01, GEN-02, GEN-03, GEN-04, GEN-05, GEN-06, GEN-07, CHAT-01, CHAT-02, CHAT-03, CITE-01, CITE-02, CITE-03
-**Plans:** 4 plans across 3 waves
+**Plans:** 4/4 plans complete
 **Success Criteria** (what must be TRUE):
   1. Asking "What amp settings did BB King use?" through the chat UI yields a streamed answer with at least one `[S{n}]` citation; clicking the citation opens a drawer showing the actual forum-post chunk text and a source-type label (`[Forum]`)
   2. The same query asked against an artificially empty retrieval result produces a refusal with a reason (e.g., "I don't have material on …") rather than a fabricated answer
