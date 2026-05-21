@@ -129,9 +129,12 @@ async def chat(req: ChatRequest):
     else:
         user_content = req.message
 
-    # 3. Retrieve relevant chunks — offload blocking IO to thread pool
+    # 3. Retrieve relevant chunks — offload blocking IO to thread pool.
+    # Use a lambda so tests can monkeypatch `retrieve` on this module; a direct
+    # `run_in_executor(None, retrieve, ...)` would capture the pre-patch binding.
     loop = asyncio.get_event_loop()
-    sources = await loop.run_in_executor(None, retrieve, user_content, 8)
+    _query, _k = user_content, 8
+    sources = await loop.run_in_executor(None, lambda: retrieve(_query, _k))
 
     # 4. Build prompt
     messages = build_messages(session["turns"], user_content, sources)
