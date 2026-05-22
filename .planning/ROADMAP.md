@@ -85,7 +85,7 @@ Plans:
   6. Three suggested follow-up buttons ("Cleaner?", "Live setting?", "Budget version?") appear under each answer and, when clicked, submit the corresponding follow-up turn
 Plans:
 - [x] 04-01-PLAN.md — react-markdown@10.1.0 install + MARKDOWN_COMPONENTS wired into MessageBubble; streaming cursor moved to outer bubble wrapper; npm run build passes [W1; UI-01, UI-02]
-- [ ] 04-02-PLAN.md — parseKnobs.ts (regex extractor, last-value-wins, 0–10 range filter) + RotaryKnob.tsx (inline SVG, 270° arc, zinc colors) + knob row in MessageBubble behind D-08 post-stream gate [W2; UI-05]
+- [x] 04-02-PLAN.md — parseKnobs.ts (regex extractor, last-value-wins, 0–10 range filter) + RotaryKnob.tsx (inline SVG, 270° arc, zinc colors) + knob row in MessageBubble behind D-08 post-stream gate [W2; UI-05]
 - [ ] 04-03-PLAN.md — streamPhase state machine in ChatPage (idle→searching→drafting→idle) + loadingLabel prop to MessageBubble + copy button (opacity-0 group-hover, navigator.clipboard, 2s Check feedback) [W2; UI-02, UI-03, UI-04]
 - [ ] 04-04-PLAN.md — FollowUpRail.tsx (three fixed buttons) + isLatestAssistant + onFollowUp wired through MessageBubble and ChatPage; final npm run build [W3; CHAT-04]
 **UI hint**: yes
@@ -111,7 +111,7 @@ Plans:
 | 1. Schema, Forum Ingestion & Golden Eval Set | 5/5 | Complete | 2026-05-19 |
 | 2. Retrieval Layer & Gear Aliases | 3/3 | Complete    | 2026-05-19 |
 | 3. Grounded Generation & Minimal Chat UI | 4/4 | Complete    | 2026-05-20 |
-| 4. UI Polish — Knobs, Markdown, Follow-ups | 1/4 | In progress | - |
+| 4. UI Polish — Knobs, Markdown, Follow-ups | 2/4 | In progress | - |
 | 5. Evaluation Harness & Grounding Quality | 0/3 | Not started | - |
 
 ---
