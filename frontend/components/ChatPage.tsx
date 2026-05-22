@@ -229,19 +229,27 @@ export default function ChatPage() {
             </p>
           </div>
         ) : (
-          messages.map((msg) => {
-            const loadingLabel = (msg.isStreaming && streamPhase !== 'idle')
-              ? (streamPhase === 'searching' ? 'Searching corpus...' : 'Drafting...')
-              : undefined;
-            return (
-              <MessageBubble
-                key={msg.id}
-                message={msg}
-                onCitationClick={handleCitationClick}
-                loadingLabel={loadingLabel}
-              />
+          (() => {
+            const lastAssistantIndex = messages.reduce(
+              (last, msg, idx) => (msg.role === 'assistant' ? idx : last),
+              -1
             );
-          })
+            return messages.map((msg, index) => {
+              const loadingLabel = (msg.isStreaming && streamPhase !== 'idle')
+                ? (streamPhase === 'searching' ? 'Searching corpus...' : 'Drafting...')
+                : undefined;
+              return (
+                <MessageBubble
+                  key={msg.id}
+                  message={msg}
+                  onCitationClick={handleCitationClick}
+                  loadingLabel={loadingLabel}
+                  isLatestAssistant={msg.role === 'assistant' && index === lastAssistantIndex}
+                  onFollowUp={(text) => handleSubmit(text)}
+                />
+              );
+            });
+          })()
         )}
         <div ref={messagesEndRef} />
       </main>

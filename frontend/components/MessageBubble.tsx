@@ -9,6 +9,7 @@ import CitationPill from "@/components/CitationPill";
 import CoverageIndicator from "@/components/CoverageIndicator";
 import { parseKnobs } from "@/utils/parseKnobs";
 import RotaryKnob from "@/components/RotaryKnob";
+import FollowUpRail from "@/components/FollowUpRail";
 
 export interface Message {
   id: string;
@@ -101,9 +102,8 @@ export default function MessageBubble({
   message,
   onCitationClick,
   loadingLabel,
-  // isLatestAssistant and onFollowUp will be wired by Plan 04
-  isLatestAssistant: _isLatestAssistant,
-  onFollowUp: _onFollowUp,
+  isLatestAssistant,
+  onFollowUp,
 }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false);
 
@@ -187,7 +187,10 @@ export default function MessageBubble({
         )}
       </div>
 
-      {/* FollowUpRail — Plan 04 inserts here */}
+      {/* FollowUpRail — appears under latest completed assistant message (UI-SPEC §6) */}
+      {isLatestAssistant && message.citations !== undefined && !message.isStreaming && onFollowUp && (
+        <FollowUpRail onSubmit={onFollowUp} />
+      )}
 
       {/* Coverage indicator and citation pills only appear AFTER event:citations fires (D-08) */}
       {message.citations !== undefined && !message.isStreaming && (
