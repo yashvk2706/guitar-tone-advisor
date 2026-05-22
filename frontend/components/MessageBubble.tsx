@@ -7,6 +7,8 @@ import { Copy, Check } from "lucide-react";
 import { CitationSource } from "@/hooks/useSSEStream";
 import CitationPill from "@/components/CitationPill";
 import CoverageIndicator from "@/components/CoverageIndicator";
+import { parseKnobs } from "@/utils/parseKnobs";
+import RotaryKnob from "@/components/RotaryKnob";
 
 export interface Message {
   id: string;
@@ -124,6 +126,14 @@ export default function MessageBubble({ message, onCitationClick }: MessageBubbl
   // Streaming cursor (▋) is on the outer bubble wrapper div — not inside ReactMarkdown
   // content — to avoid the cursor appearing inside a <p> or <li> (UI-SPEC §Component
   // Contracts §1 streaming behavior note).
+
+  // Knob row: only parse after the post-stream gate opens (citations received, not streaming).
+  // parseKnobs is a fast single regex pass — no useMemo needed per UI-SPEC §5 note.
+  const knobs =
+    message.citations !== undefined && !message.isStreaming
+      ? parseKnobs(message.content)
+      : [];
+
   const streamingClass = message.isStreaming
     ? "after:content-['▋'] after:animate-pulse after:text-zinc-400"
     : "";
@@ -161,9 +171,20 @@ export default function MessageBubble({ message, onCitationClick }: MessageBubbl
         </div>
       </div>
 
+      {/* Loading indicator — inserted by Plan 03 */}
+
       {/* Coverage indicator and citation pills only appear AFTER event:citations fires (D-08) */}
       {message.citations !== undefined && !message.isStreaming && (
         <>
+          {/* Knob row (UI-SPEC §5) — rendered between markdown content and CoverageIndicator */}
+          {knobs.length > 0 && (
+            <div className="flex flex-row flex-wrap gap-4 mt-3 pt-3 border-t border-zinc-800">
+              {knobs.map((k) => (
+                <RotaryKnob key={k.name} name={k.name} value={k.value} />
+              ))}
+            </div>
+          )}
+
           <CoverageIndicator count={message.citations.length} />
           {message.citations.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
