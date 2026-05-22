@@ -21,6 +21,9 @@ export interface Message {
 interface MessageBubbleProps {
   message: Message;
   onCitationClick: (chunkId: string) => void;
+  loadingLabel?: string;               // "Searching corpus..." | "Drafting..." | undefined (Plan 03)
+  isLatestAssistant?: boolean;         // Plan 04 will use this — declared now to avoid a second edit
+  onFollowUp?: (text: string) => void; // Plan 04 will use this — declared now to avoid a second edit
 }
 
 // Tailwind class mapping for react-markdown rendered elements (UI-SPEC §Typography)
@@ -94,7 +97,14 @@ const MARKDOWN_COMPONENTS: Components = {
   ),
 };
 
-export default function MessageBubble({ message, onCitationClick }: MessageBubbleProps) {
+export default function MessageBubble({
+  message,
+  onCitationClick,
+  loadingLabel,
+  // isLatestAssistant and onFollowUp will be wired by Plan 04
+  isLatestAssistant: _isLatestAssistant,
+  onFollowUp: _onFollowUp,
+}: MessageBubbleProps) {
   const [copied, setCopied] = useState(false);
 
   // Error bubble (UI-SPEC §10)
@@ -155,6 +165,7 @@ export default function MessageBubble({ message, onCitationClick }: MessageBubbl
           onClick={handleCopy}
           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 flex items-center justify-center rounded text-zinc-700 hover:text-zinc-400 hover:bg-zinc-800"
           title={copied ? "Copied!" : "Copy response"}
+          aria-label={copied ? "Copied!" : "Copy response"}
         >
           {copied ? (
             <Check size={14} className="text-green-500" />
@@ -169,9 +180,14 @@ export default function MessageBubble({ message, onCitationClick }: MessageBubbl
             {message.content}
           </ReactMarkdown>
         </div>
+
+        {/* Loading indicator — shows while stream is active (UI-SPEC §2) */}
+        {message.isStreaming && loadingLabel && (
+          <p className="text-xs text-zinc-500 mt-1 animate-pulse">{loadingLabel}</p>
+        )}
       </div>
 
-      {/* Loading indicator — inserted by Plan 03 */}
+      {/* FollowUpRail — Plan 04 inserts here */}
 
       {/* Coverage indicator and citation pills only appear AFTER event:citations fires (D-08) */}
       {message.citations !== undefined && !message.isStreaming && (
