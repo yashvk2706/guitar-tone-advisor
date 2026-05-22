@@ -1,11 +1,12 @@
 "use client";
 
 // Top-level chat orchestration component per UI-SPEC §1
-// Manages all React state: sessionId, messages, isStreaming, drawer
+// Manages all React state: sessionId, messages, isStreaming, streamPhase, drawer
+
+type StreamPhase = 'idle' | 'searching' | 'drafting' | 'done';
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Guitar, ArrowUp, SquarePen } from "lucide-react";
-
 import { streamChat, CitationSource } from "@/hooks/useSSEStream";
 import MessageBubble, { Message } from "@/components/MessageBubble";
 import CitationDrawer, { DrawerState, DrawerData } from "@/components/CitationDrawer";
@@ -14,6 +15,7 @@ export default function ChatPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [streamPhase, setStreamPhase] = useState<StreamPhase>('idle');
   const [inputValue, setInputValue] = useState("");
   const [drawer, setDrawer] = useState<DrawerState | null>(null);
 
@@ -21,6 +23,7 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const hasFirstTokenRef = useRef(false);
 
   // Auto-resize textarea up to max-h-[200px]
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -71,16 +74,22 @@ export default function ChatPage() {
     setDrawer(null);
   }, []);
 
-  // Submit a message
-  const handleSubmit = useCallback(async () => {
-    const message = inputValue.trim();
+  // Submit a message — accepts optional overrideMessage for follow-up button clicks (Plan 04)
+  const handleSubmit = useCallback(async (overrideMessage?: string) => {
+    const message = overrideMessage !== undefined ? overrideMessage : inputValue.trim();
     if (!message || isStreaming) return;
 
-    // Clear textarea
-    setInputValue("");
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
+    // Clear textarea only when user typed the message (not a programmatic override)
+    if (overrideMessage === undefined) {
+      setInputValue("");
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
     }
+
+    // Reset first-token flag and transition to 'searching'
+    hasFirstTokenRef.current = false;
+    setStreamPhase('searching');
 
     // Add user message to list
     const userId = `user-${Date.now()}`;
@@ -106,6 +115,11 @@ export default function ChatPage() {
       },
       // onToken
       (token: string) => {
+        // First token: transition searching → drafting
+        if (!hasFirstTokenRef.current) {
+          hasFirstTokenRef.current = true;
+          setStreamPhase('drafting');
+        }
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === assistantId
@@ -135,6 +149,7 @@ export default function ChatPage() {
           )
         );
         setIsStreaming(false);
+        setStreamPhase('idle');
       },
       // onDone
       () => {
@@ -147,6 +162,7 @@ export default function ChatPage() {
           )
         );
         setIsStreaming(false);
+        setTimeout(() => setStreamPhase('idle'), 300);
         textareaRef.current?.focus();
       },
       abortController.signal,
@@ -171,6 +187,7 @@ export default function ChatPage() {
     setMessages([]);
     setDrawer(null);
     setIsStreaming(false);
+    setStreamPhase('idle');
     setInputValue("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -212,13 +229,19 @@ export default function ChatPage() {
             </p>
           </div>
         ) : (
-          messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              onCitationClick={handleCitationClick}
-            />
-          ))
+          messages.map((msg) => {
+            const loadingLabel = (msg.isStreaming && streamPhase !== 'idle')
+              ? (streamPhase === 'searching' ? 'Searching corpus...' : 'Drafting...')
+              : undefined;
+            return (
+              <MessageBubble
+                key={msg.id}
+                message={msg}
+                onCitationClick={handleCitationClick}
+                loadingLabel={loadingLabel}
+              />
+            );
+          })
         )}
         <div ref={messagesEndRef} />
       </main>
@@ -238,7 +261,7 @@ export default function ChatPage() {
             style={{ maxHeight: "200px" }}
           />
           <button
-            onClick={handleSubmit}
+            onClick={() => handleSubmit()}
             disabled={isStreaming || !inputValue.trim()}
             title="Send message"
             className="ml-2 h-10 w-10 flex items-center justify-center rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none shrink-0"
