@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In progress
-stopped_at: Phase 4 Plan 03 complete — streamPhase state machine and loadingLabel prop wired into ChatPage and MessageBubble
-last_updated: "2026-05-22T20:00:00.000Z"
+stopped_at: Phase 4 Plan 04 complete — FollowUpRail component wired; Phase 4 complete (4/4 plans); final npm run build passes
+last_updated: "2026-05-22T19:28:23Z"
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 16
-  completed_plans: 15
-  percent: 72
+  completed_plans: 16
+  percent: 78
 ---
 
 # State: Guitar Tone Advisor
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-15)
 
 **Core value:** Given a user's gear and a target tone, produce concrete, cited settings recommendations they can immediately act on.
-**Current focus:** Phase 3 — Grounded Generation & Minimal Chat UI
+**Current focus:** Phase 5 — Evaluation Harness & Grounding Quality
 
 ## Phase Progress
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 | 1 | Schema, Forum Ingestion & Golden Eval Set | Complete (5/5 plans) |
 | 2 | Retrieval Layer & Gear Aliases | Complete (3/3 plans) |
 | 3 | Grounded Generation & Minimal Chat UI | Complete (4/4 plans) |
-| 4 | UI Polish — Knobs, Markdown, Follow-ups | In Progress (3/4) |
+| 4 | UI Polish — Knobs, Markdown, Follow-ups | Complete (4/4) |
 | 5 | Evaluation Harness & Grounding Quality | Not Started |
 
 ## Active Context
@@ -68,9 +68,10 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 - [Phase 4 Plan 01]: react-markdown v10.1.0 JSX mode satisfies T-03-14 (no dangerouslySetInnerHTML) and T-04-01 (no rehype-raw). MARKDOWN_COMPONENTS const maps 13 element types to Tailwind classes per UI-SPEC §Typography. streamingClass (▋ cursor) moved to outer bubble wrapper div — prevents cursor rendering inside react-markdown p/li elements. Copy-to-clipboard button added per UI-SPEC §7 (group-hover reveal, 2s Check feedback, navigator.clipboard.writeText). Node 22.17.0 required for npm install — Node 19 (system default) produces @tailwindcss/oxide native binding mismatch. UI-01, UI-02 satisfied.
 - [Phase 4 Plan 02]: matchAll() used over exec() loop for KNOB_RE to avoid stateful lastIndex mutation on module-level g-flag regex. arcPath() helper extracted in RotaryKnob.tsx for SVG geometry readability. valueD set to null when safeValue===0 to suppress zero-length arc SVG artifact. knobs computed inline (not useMemo) per UI-SPEC §5 note — parseKnobs is a single regex pass. T-04-03 mitigated: out-of-range values silently dropped in parseKnobs. UI-05 satisfied.
 - [Phase 4 Plan 03]: streamPhase state (idle/searching/drafting/done) alongside isStreaming — different concerns (isStreaming gates UI, streamPhase drives label text). hasFirstTokenRef (useRef) tracks first-token transition without re-firing setStreamPhase on every token. handleSubmit refactored to accept overrideMessage?: string; textarea clear gated on (overrideMessage === undefined). Send button changed to () => handleSubmit() to prevent SyntheticEvent leak. isLatestAssistant and onFollowUp forward-declared in MessageBubbleProps (prefixed _ in destructuring) for Plan 04 compatibility. Plan 01 had pre-wired copy button — Task 2 only added loadingLabel, aria-label, and FollowUpRail placeholder. UI-02, UI-03, UI-04 satisfied.
+- [Phase 4 Plan 04]: FollowUpRail.tsx created with FOLLOW_UP_LABELS as module-level compile-time const (T-04-07 mitigated). Four-way render gate in MessageBubble: isLatestAssistant && citations !== undefined && !isStreaming && onFollowUp. lastAssistantIndex computed via messages.reduce() in an IIFE co-located with messages.map() to avoid polluting component scope. onFollowUp guard retained in MessageBubble even when ChatPage always passes it — keeps component safe for standalone use in tests. npm run build exits 0 — Phase 4 complete. CHAT-04 satisfied.
 
 ## Session Continuity
 
-Last session: 2026-05-22T20:00:00.000Z
-Stopped at: Completed 04-03-PLAN.md — streamPhase state machine and loadingLabel prop wired
-Resume file: .planning/phases/04-ui-polish-knobs-markdown-follow-ups/04-04-PLAN.md
+Last session: 2026-05-22T19:28:23Z
+Stopped at: Completed 04-04-PLAN.md — FollowUpRail wired; Phase 4 all 4/4 plans complete; npm run build passes
+Resume file: .planning/phases/05-evaluation-harness-grounding-quality/05-01-PLAN.md

@@ -11,7 +11,7 @@
 - [x] **Phase 1: Schema, Forum Ingestion & Golden Eval Set** — Migrate Postgres + pgvector, build forum-only CLI ingestion pipeline, and author the held-out golden eval set before any retrieval tuning
 - [x] **Phase 2: Retrieval Layer & Gear Aliases** — Wire HNSW cosine retrieval through the Embedder Protocol with bidirectional gear-alias query expansion
 - [x] **Phase 3: Grounded Generation & Minimal Chat UI** — End-to-end SSE-streamed answers with inline `[S{n}]` citations rendered in a minimal Next.js chat
-- [ ] **Phase 4: UI Polish — Knobs, Markdown, Follow-ups** — Add rotary-knob settings, Markdown rendering, follow-up buttons, copy-to-clipboard, loading states, session history
+- [x] **Phase 4: UI Polish — Knobs, Markdown, Follow-ups** — Add rotary-knob settings, Markdown rendering, follow-up buttons, copy-to-clipboard, loading states, session history
 - [ ] **Phase 5: Evaluation Harness & Grounding Quality** — Score against the existing golden eval set (recall@K / MRR), empty-context refusal smoke test, RAGAS faithfulness
 
 ## Phase Details
@@ -87,7 +87,7 @@ Plans:
 - [x] 04-01-PLAN.md — react-markdown@10.1.0 install + MARKDOWN_COMPONENTS wired into MessageBubble; streaming cursor moved to outer bubble wrapper; npm run build passes [W1; UI-01, UI-02]
 - [x] 04-02-PLAN.md — parseKnobs.ts (regex extractor, last-value-wins, 0–10 range filter) + RotaryKnob.tsx (inline SVG, 270° arc, zinc colors) + knob row in MessageBubble behind D-08 post-stream gate [W2; UI-05]
 - [x] 04-03-PLAN.md — streamPhase state machine in ChatPage (idle→searching→drafting→idle) + loadingLabel prop to MessageBubble + copy button (opacity-0 group-hover, navigator.clipboard, 2s Check feedback) [W2; UI-02, UI-03, UI-04]
-- [ ] 04-04-PLAN.md — FollowUpRail.tsx (three fixed buttons) + isLatestAssistant + onFollowUp wired through MessageBubble and ChatPage; final npm run build [W3; CHAT-04]
+- [x] 04-04-PLAN.md — FollowUpRail.tsx (three fixed buttons) + isLatestAssistant + onFollowUp wired through MessageBubble and ChatPage; final npm run build [W3; CHAT-04]
 **UI hint**: yes
 
 ### Phase 5: Evaluation Harness & Grounding Quality
@@ -111,7 +111,7 @@ Plans:
 | 1. Schema, Forum Ingestion & Golden Eval Set | 5/5 | Complete | 2026-05-19 |
 | 2. Retrieval Layer & Gear Aliases | 3/3 | Complete    | 2026-05-19 |
 | 3. Grounded Generation & Minimal Chat UI | 4/4 | Complete    | 2026-05-20 |
-| 4. UI Polish — Knobs, Markdown, Follow-ups | 3/4 | In progress | - |
+| 4. UI Polish — Knobs, Markdown, Follow-ups | 4/4 | Complete    | 2026-05-22 |
 | 5. Evaluation Harness & Grounding Quality | 0/3 | Not started | - |
 
 ---
