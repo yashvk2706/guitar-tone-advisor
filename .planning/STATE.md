@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In progress
-stopped_at: Phase 4 planned — Ready to execute
-last_updated: "2026-05-21T21:15:00.000Z"
+stopped_at: Phase 4 Plan 01 complete — react-markdown wired into MessageBubble
+last_updated: "2026-05-22T19:11:31.000Z"
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 16
-  completed_plans: 12
-  percent: 60
+  completed_plans: 13
+  percent: 65
 ---
 
 # State: Guitar Tone Advisor
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 | 1 | Schema, Forum Ingestion & Golden Eval Set | Complete (5/5 plans) |
 | 2 | Retrieval Layer & Gear Aliases | Complete (3/3 plans) |
 | 3 | Grounded Generation & Minimal Chat UI | Complete (4/4 plans) |
-| 4 | UI Polish — Knobs, Markdown, Follow-ups | Not Started |
+| 4 | UI Polish — Knobs, Markdown, Follow-ups | In Progress (1/4) |
 | 5 | Evaluation Harness & Grounding Quality | Not Started |
 
 ## Active Context
@@ -65,9 +65,10 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 - [Phase 3 Plan 02]: app/session.py uses a module-level dict + threading.Lock() (no nested lock acquisition). del turns[:2] always drops exactly 2 messages to preserve role alternation per D-12. get_or_create_session() returns a view into the live list (not a copy) — callers see appended turns without re-fetching. Test isolation via autouse _reset_sessions fixture (mirrors _reset_alias_cache pattern from test_retrieval.py). CHAT-02 complete.
 - [Phase 3 Plan 03]: per-request AsyncAnthropic client (never module-level) constructed inside route handler with HTTPException(500) if api_key is None. EventSourceResponse(event_gen(), ping=0) — ping=0 prevents sse-starlette ping comments causing frontend JSON.parse errors (Pitfall 2). User turn appended before EventSourceResponse; assistant turn appended inside event_gen() after stream_response exhausts. GET /sources/{chunk_id}: try/except around cur.execute to catch Postgres DataError on invalid UUID cast → 404. Monkeypatch-based TestClient test for SSE endpoint (no pytest-asyncio). GEN-07, CHAT-01, CITE-01 complete.
 - [Phase 3 Plan 04]: SSE frame splitting uses /\r?\n\r?\n/ — sse-starlette 3.4.4 emits CRLF separators; splitting on \n\n alone would drop frames. Lines starting with ":" skipped to prevent JSON.parse errors from ping comments (Pitfall 2). Citation pills rendered only after event:citations fires (D-08 hard rule — absent from DOM during streaming). New Chat is client-only: setSessionId(null)+setMessages([]) with no backend call (D-17). chunk_text rendered as JSX text node, never dangerouslySetInnerHTML (T-03-14 satisfied). CommonJS module.exports used for next.config.js (Next.js 15/16 config format compatibility). gear=null sent on all Phase 3 turns — user describes gear in plain text. CHAT-01, CHAT-03, CITE-01, CITE-02, CITE-03 frontend layer complete. Phase 3 complete.
+- [Phase 4 Plan 01]: react-markdown v10.1.0 JSX mode satisfies T-03-14 (no dangerouslySetInnerHTML) and T-04-01 (no rehype-raw). MARKDOWN_COMPONENTS const maps 13 element types to Tailwind classes per UI-SPEC §Typography. streamingClass (▋ cursor) moved to outer bubble wrapper div — prevents cursor rendering inside react-markdown p/li elements. Copy-to-clipboard button added per UI-SPEC §7 (group-hover reveal, 2s Check feedback, navigator.clipboard.writeText). Node 22.17.0 required for npm install — Node 19 (system default) produces @tailwindcss/oxide native binding mismatch. UI-01, UI-02 satisfied.
 
 ## Session Continuity
 
-Last session: 2026-05-21T20:48:04.793Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-ui-polish-knobs-markdown-follow-ups/04-UI-SPEC.md
+Last session: 2026-05-22T19:11:31.000Z
+Stopped at: Completed 04-01-PLAN.md — react-markdown wired, build passes
+Resume file: .planning/phases/04-ui-polish-knobs-markdown-follow-ups/04-02-PLAN.md
