@@ -1,7 +1,7 @@
 ---
 phase: 04-ui-polish-knobs-markdown-follow-ups
 verified: 2026-05-22T12:00:00Z
-status: human_needed
+status: complete
 score: 14/14
 overrides_applied: 0
 human_verification:
@@ -26,7 +26,7 @@ human_verification:
 
 **Phase Goal:** The chat UI graduates from minimal-but-functional to actually-pleasant: Markdown formatting, visual rotary-knob renderings of knob settings, scrollable session history, one-click copy of the recommendation block, loading-state messaging, and three suggested follow-up action buttons under every answer.
 **Verified:** 2026-05-22T12:00:00Z
-**Status:** human_needed
+**Status:** complete
 **Re-verification:** No — initial verification
 
 ## Goal Achievement
