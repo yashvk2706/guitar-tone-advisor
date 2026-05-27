@@ -152,7 +152,7 @@ def test_empty_sources_produces_refusal_structure():
     content contains a <sources> tag pair — signals the refusal path to the model."""
     from app.generation.prompt import build_messages  # type: ignore[import-not-found]
 
-    messages = build_messages(turns=[], user_message="test", sources=[])
+    messages = build_messages(turns=[], user_message="test", sources_with_ids=[])
     assert len(messages) >= 1, "build_messages must return at least one message"
     last_user_msg = messages[-1]
     assert last_user_msg["role"] == "user"
@@ -209,7 +209,7 @@ def test_stream_yields_session_event_first():
     from app.generation.generator import stream_response  # type: ignore[import-not-found]
 
     fake_client = _FakeAnthropicClient(tokens=["hello"])
-    sources: list[ChunkResult] = []
+    sources_with_ids: list[tuple[ChunkResult, int]] = []
 
     async def _collect():
         events = []
@@ -217,7 +217,7 @@ def test_stream_yields_session_event_first():
             client=fake_client,
             system_blocks=[{"type": "text", "text": "sys", "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": "test"}],
-            sources=sources,
+            sources_with_ids=sources_with_ids,
             session_id="test-session-id",
         ):
             events.append(sse)
@@ -241,7 +241,7 @@ def test_stream_yields_citations_event_last():
     from app.generation.generator import stream_response  # type: ignore[import-not-found]
 
     fake_client = _FakeAnthropicClient(tokens=["hello"])
-    sources: list[ChunkResult] = []
+    sources_with_ids: list[tuple[ChunkResult, int]] = []
 
     async def _collect():
         events = []
@@ -249,7 +249,7 @@ def test_stream_yields_citations_event_last():
             client=fake_client,
             system_blocks=[{"type": "text", "text": "sys", "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": "test"}],
-            sources=sources,
+            sources_with_ids=sources_with_ids,
             session_id="test-session-id",
         ):
             events.append(sse)
@@ -273,7 +273,7 @@ def test_citations_payload_includes_source_type():
 
     # Use a token that references S1 so it appears in the citations payload
     fake_client = _FakeAnthropicClient(tokens=["[S1] warm tone"])
-    sources = [_make_chunk_result(source_type="forum")]
+    sources_with_ids = [(_make_chunk_result(source_type="forum"), 1)]
 
     async def _collect():
         events = []
@@ -281,7 +281,7 @@ def test_citations_payload_includes_source_type():
             client=fake_client,
             system_blocks=[{"type": "text", "text": "sys", "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": "test"}],
-            sources=sources,
+            sources_with_ids=sources_with_ids,
             session_id="test-session-id",
         ):
             events.append(sse)
@@ -310,8 +310,8 @@ def test_citation_count_equals_validated_sources():
 
     # Tokens that reference [S1] and [S2]; S3 exists but is not referenced
     fake_client = _FakeAnthropicClient(tokens=["[S1]", " text ", "[S2]"])
-    sources = [
-        _make_chunk_result(chunk_id=f"id-{i}", source_name=f"src{i}.txt")
+    sources_with_ids = [
+        (_make_chunk_result(chunk_id=f"id-{i}", source_name=f"src{i}.txt"), i + 1)
         for i in range(3)
     ]
 
@@ -321,7 +321,7 @@ def test_citation_count_equals_validated_sources():
             client=fake_client,
             system_blocks=[{"type": "text", "text": "sys", "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": "test"}],
-            sources=sources,
+            sources_with_ids=sources_with_ids,
             session_id="test-session-id",
         ):
             events.append(sse)

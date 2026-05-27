@@ -31,7 +31,7 @@ from app.db import get_conn
 from app.generation.generator import stream_response
 from app.generation.prompt import build_messages, build_system_blocks
 from app.retrieval.base import retrieve
-from app.session import append_turn, get_or_create_session
+from app.session import append_turn, get_or_create_session, register_sources
 
 logger = logging.getLogger(__name__)
 
@@ -136,17 +136,20 @@ async def chat(req: ChatRequest):
     _query, _k = user_content, 8
     sources = await loop.run_in_executor(None, lambda: retrieve(_query, _k))
 
-    # 4. Build prompt
-    messages = build_messages(session["turns"], user_content, sources)
+    # 4. Assign stable session-global S-numbers to retrieved chunks
+    sources_with_ids = list(zip(sources, register_sources(sid, [c.chunk_id for c in sources])))
+
+    # 5. Build prompt
+    messages = build_messages(session["turns"], user_content, sources_with_ids)
     system_blocks = build_system_blocks()
 
-    # 5. Append user turn BEFORE streaming (Pitfall 1 prevention)
+    # 6. Append user turn BEFORE streaming (Pitfall 1 prevention)
     append_turn(sid, "user", user_content)
 
-    # 6. Build Anthropic client per request (never at module level)
+    # 7. Build Anthropic client per request (never at module level)
     client = AsyncAnthropic(api_key=settings.anthropic_api_key)
 
-    # 7. Inner async generator: wraps stream_response, accumulates assistant
+    # 8. Inner async generator: wraps stream_response, accumulates assistant
     #    response text from token events, then appends assistant turn.
     async def event_gen():
         assistant_parts: list[str] = []
@@ -154,7 +157,7 @@ async def chat(req: ChatRequest):
             client=client,
             system_blocks=system_blocks,
             messages=messages,
-            sources=sources,
+            sources_with_ids=sources_with_ids,
             session_id=sid,
         ):
             # Accumulate text from plain data token events (no named event).

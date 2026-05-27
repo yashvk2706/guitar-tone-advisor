@@ -17,7 +17,12 @@ Security constraints (CLAUDE.md):
 
 from __future__ import annotations
 
+import re
 from xml.sax.saxutils import escape, quoteattr
+
+# Strips <sources>...</sources> blocks (including trailing newline) from prior
+# user turns so stale S{n} IDs don't bleed into the current turn's context.
+_SOURCES_BLOCK_RE = re.compile(r"<sources>.*?</sources>\n*", re.DOTALL)
 
 from app.retrieval.base import ChunkResult
 
@@ -40,6 +45,9 @@ GROUNDING RULES (non-negotiable):
    Do NOT fabricate recommendations.
 3. Never cite a source not in the <sources> block. n in [Sn] must be 1 ≤ n ≤ N
    where N is the total number of sources provided.
+   Source IDs are LOCAL to each response — [S3] in a prior assistant turn
+   refers to a completely different chunk than [S3] in the current turn.
+   Never interpret, reference, or comment on source IDs from your own prior responses.
 4. When sources conflict, surface the disagreement: "Source [S1] suggests X,
    [S3] suggests Y — the difference is..."
 5. The user's gear context is in the first user message in a <gear> block.
@@ -84,29 +92,27 @@ def build_system_blocks() -> list[dict]:
     ]
 
 
-def build_sources_xml(sources: list[ChunkResult]) -> str:
-    """Format retrieved chunks as a <sources> XML block for injection into the user message.
-
-    Session-local IDs S1..Sn are assigned per request (D-14). The model uses
-    these IDs for inline citations [Sn]. An empty sources list returns the
-    minimal <sources> wrapper to signal the refusal path to the model.
+def build_sources_xml(sources_with_ids: list[tuple[ChunkResult, int]]) -> str:
+    """Format retrieved chunks as a <sources> XML block using session-stable IDs.
 
     Args:
-        sources: The list of ChunkResult objects returned by retrieve() for
-                 this turn. May be empty (corpus-silent query).
+        sources_with_ids: List of (ChunkResult, assigned_sn) pairs from
+                          ``session.register_sources()``. The integer is the
+                          session-global S-number for that chunk — stable across
+                          all turns in the session.
 
     Returns:
         XML string of the form:
-        ``<sources>\\n  <source id="S1" type="..." name="...">text</source>\\n</sources>``
+        ``<sources>\\n  <source id="S3" type="..." name="...">text</source>\\n</sources>``
         For an empty list: ``"<sources>\\n</sources>"``.
     """
-    if not sources:
+    if not sources_with_ids:
         return "<sources>\n</sources>"
 
     parts = ["<sources>"]
-    for i, chunk in enumerate(sources, start=1):
+    for chunk, sn in sources_with_ids:
         parts.append(
-            f"  <source id=\"S{i}\" type={quoteattr(chunk.source_type)} name={quoteattr(chunk.source_name)}>"
+            f"  <source id=\"S{sn}\" type={quoteattr(chunk.source_type)} name={quoteattr(chunk.source_name)}>"
         )
         parts.append(f"    {escape(chunk.text)}")
         parts.append("  </source>")
@@ -117,28 +123,35 @@ def build_sources_xml(sources: list[ChunkResult]) -> str:
 def build_messages(
     turns: list[dict],
     user_message: str,
-    sources: list[ChunkResult],
+    sources_with_ids: list[tuple[ChunkResult, int]],
 ) -> list[dict]:
     """Build the anthropic messages array for one turn.
 
-    Prior turns in the session history are included verbatim (they already
-    contain embedded <sources> XML from prior requests — the model can see
-    them for context). The current user turn injects a fresh <sources> block
-    before the user's actual question.
+    Prior user turns have their <sources> XML stripped — those blocks used
+    session-global S-numbers that are stable, but carrying full chunk text
+    forward bloats the prompt without adding value (the assistant already cited
+    what mattered). The current turn injects a fresh <sources> block with the
+    same stable S-numbers so the model can look up any chunk it references.
 
     Args:
-        turns:        Prior conversation turns — list of
-                      ``{"role": "user"|"assistant", "content": str}`` dicts.
-                      Pass ``[]`` on the first turn.
-        user_message: The user's raw message text for this turn.
-        sources:      Retrieved ChunkResult objects for this turn. May be empty.
+        turns:            Prior conversation turns (user + assistant dicts).
+                          Pass ``[]`` on the first turn.
+        user_message:     The user's raw message for this turn.
+        sources_with_ids: (ChunkResult, assigned_sn) pairs from
+                          ``session.register_sources()`` for this turn.
 
     Returns:
-        A list of MessageParam dicts ready to pass as ``messages=`` to the
-        Anthropic SDK. Length is ``len(turns) + 1`` (one new user turn appended).
+        Anthropic MessageParam list, length ``len(turns) + 1``.
     """
-    messages = list(turns)  # copy — do not mutate caller's history
-    sources_xml = build_sources_xml(sources)
+    messages = []
+    for turn in turns:
+        if turn["role"] == "user":
+            clean = _SOURCES_BLOCK_RE.sub("", turn["content"]).lstrip()
+            messages.append({"role": "user", "content": clean})
+        else:
+            messages.append(dict(turn))
+
+    sources_xml = build_sources_xml(sources_with_ids)
     messages.append(
         {
             "role": "user",

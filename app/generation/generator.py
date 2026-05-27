@@ -46,7 +46,7 @@ async def stream_response(
     client: AsyncAnthropic,
     system_blocks: list[dict],
     messages: list[dict],
-    sources: list[ChunkResult],
+    sources_with_ids: list[tuple[ChunkResult, int]],
     session_id: str,
 ) -> AsyncIterator[ServerSentEvent]:
     """Yield SSE events: session → token data → citations.
@@ -66,8 +66,9 @@ async def stream_response(
         system_blocks: list of TextBlockParam dicts (with cache_control) from
                        ``build_system_blocks()``.
         messages:      Anthropic MessageParam list from ``build_messages()``.
-        sources:       The retrieved ChunkResult list for this turn. Used for
-                       citation validation and building the citations payload.
+        sources_with_ids: (ChunkResult, assigned_sn) pairs from
+                          ``session.register_sources()``. The integer is the
+                          session-global S-number — stable across all turns.
         session_id:    UUID string for this session — echoed back in the first
                        event so the client can store it.
 
@@ -98,14 +99,15 @@ async def stream_response(
     # 3. Post-stream citation validation — runs exactly once after stream ends (D-08)
     response_text = "".join(full_response)
     raw_ns = {int(n) for n in _CITATION_RE.findall(response_text)}
-    valid_ns = {n for n in raw_ns if 1 <= n <= len(sources)}
+    id_to_chunk = {sn: chunk for chunk, sn in sources_with_ids}
+    valid_ns = {n for n in raw_ns if n in id_to_chunk}
 
     citations_payload = [
         {
             "id": f"S{n}",
-            "chunk_id": sources[n - 1].chunk_id,
-            "source_type": sources[n - 1].source_type,
-            "source_name": sources[n - 1].source_name,
+            "chunk_id": id_to_chunk[n].chunk_id,
+            "source_type": id_to_chunk[n].source_type,
+            "source_name": id_to_chunk[n].source_name,
         }
         for n in sorted(valid_ns)
     ]

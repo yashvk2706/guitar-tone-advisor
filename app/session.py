@@ -10,6 +10,14 @@ Design decisions (from CONTEXT.md):
           pairs). When history exceeds the budget, drop the oldest turn pair
           (always 2 messages) to preserve role alternation. No summarization.
 
+Source ID stability:
+    Each session tracks a ``source_map`` (chunk_id → assigned S-number) and a
+    monotonically incrementing ``source_counter``. Calling ``register_sources()``
+    for each turn's retrieved chunks assigns stable, session-global S-numbers:
+    the same chunk always gets the same S{n} within a session, and new chunks
+    receive the next available number. This prevents [S3] in one turn from
+    referring to a different chunk than [S3] in the next turn.
+
 Thread safety:
     ``_lock`` (threading.Lock) guards all reads and writes to ``_sessions``.
     FastAPI + uvicorn (single-process async) means true concurrent session
@@ -33,7 +41,9 @@ import threading
 # Module-level state
 # ---------------------------------------------------------------------------
 
-_sessions: dict[str, list[dict]] = {}
+_sessions: dict[str, dict] = {}
+# Each value: {"turns": list[dict], "source_map": dict[str, int], "source_counter": int}
+
 _lock = threading.Lock()
 
 MAX_MESSAGES: int = 20  # 10 turn pairs (D-12: retain last 10–15 pairs)
@@ -61,8 +71,12 @@ def get_or_create_session(session_id: str) -> dict:
     """
     with _lock:
         if session_id not in _sessions:
-            _sessions[session_id] = []
-        return {"id": session_id, "turns": _sessions[session_id]}
+            _sessions[session_id] = {
+                "turns": [],
+                "source_map": {},
+                "source_counter": 0,
+            }
+        return {"id": session_id, "turns": _sessions[session_id]["turns"]}
 
 
 def append_turn(session_id: str, role: str, content: str) -> None:
@@ -84,7 +98,11 @@ def append_turn(session_id: str, role: str, content: str) -> None:
         content:    Full message text for this turn.
     """
     with _lock:
-        turns = _sessions.setdefault(session_id, [])
+        session = _sessions.setdefault(
+            session_id,
+            {"turns": [], "source_map": {}, "source_counter": 0},
+        )
+        turns = session["turns"]
         turns.append({"role": role, "content": content})
         # Sliding window: drop oldest pair until within budget (preserves role
         # alternation — always drops 2 at a time). Using while instead of if
@@ -92,3 +110,34 @@ def append_turn(session_id: str, role: str, content: str) -> None:
         # how many turns were appended in a single call.
         while len(turns) > MAX_MESSAGES:
             del turns[:2]
+
+
+def register_sources(session_id: str, chunk_ids: list[str]) -> list[int]:
+    """Assign stable session-global S-numbers to a list of chunk IDs.
+
+    Each unique chunk_id is assigned a monotonically increasing integer once
+    per session and reused on subsequent turns. This ensures that [S3] always
+    refers to the same chunk within a session, regardless of retrieval order.
+
+    Args:
+        session_id: UUID key for the session (created if absent).
+        chunk_ids:  Ordered list of chunk IDs from the current turn's retrieval.
+
+    Returns:
+        List of assigned S-numbers in the same order as ``chunk_ids``.
+        E.g. for a session where S1 and S2 were assigned in turn 1, a new
+        chunk in turn 2 gets S3, while a repeated chunk keeps its prior number.
+    """
+    with _lock:
+        session = _sessions.setdefault(
+            session_id,
+            {"turns": [], "source_map": {}, "source_counter": 0},
+        )
+        source_map = session["source_map"]
+        assigned: list[int] = []
+        for chunk_id in chunk_ids:
+            if chunk_id not in source_map:
+                session["source_counter"] += 1
+                source_map[chunk_id] = session["source_counter"]
+            assigned.append(source_map[chunk_id])
+        return assigned
