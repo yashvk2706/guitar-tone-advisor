@@ -5,8 +5,10 @@
 interface RotaryKnobProps {
   /** Knob label, e.g. "Bass" */
   name: string;
-  /** Current knob value, 0.0 – 10.0 */
+  /** Current knob value, 0.0 – 10.0 — controls arc position */
   value: number;
+  /** Display string for the label, e.g. "7" or "3-4". Defaults to value. */
+  display?: string;
 }
 
 /**
@@ -42,7 +44,7 @@ function arcPath(
   return `M ${sx.toFixed(3)} ${sy.toFixed(3)} A ${r} ${r} 0 ${large} 1 ${ex.toFixed(3)} ${ey.toFixed(3)}`;
 }
 
-export default function RotaryKnob({ name, value }: RotaryKnobProps) {
+export default function RotaryKnob({ name, value, display }: RotaryKnobProps) {
   // Clamp to valid range in case caller passes out-of-bounds value
   const safeValue = Math.max(0, Math.min(10, value));
 
@@ -64,10 +66,11 @@ export default function RotaryKnob({ name, value }: RotaryKnobProps) {
       ? arcPath(CX, CY, R, TRACK_START_DEG, valueEndDeg, valueLargeArc)
       : null;
 
-  // Display label: integer if whole number, one decimal place otherwise
-  const displayValue = Number.isInteger(safeValue)
+  // Display label: use explicit display prop if provided (e.g. "3-4" for ranges),
+  // otherwise derive from value.
+  const displayValue = display ?? (Number.isInteger(safeValue)
     ? String(safeValue)
-    : safeValue.toFixed(1);
+    : safeValue.toFixed(1));
 
   return (
     <svg

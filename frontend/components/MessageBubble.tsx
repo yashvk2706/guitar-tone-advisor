@@ -199,7 +199,7 @@ export default function MessageBubble({
           {knobs.length > 0 && (
             <div className="flex flex-row flex-wrap gap-4 mt-3 pt-3 border-t border-zinc-800">
               {knobs.map((k) => (
-                <RotaryKnob key={k.name} name={k.name} value={k.value} />
+                <RotaryKnob key={k.name} name={k.name} value={k.value} display={k.display} />
               ))}
             </div>
           )}
