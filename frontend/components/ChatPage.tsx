@@ -34,13 +34,14 @@ export default function ChatPage() {
     textarea.style.height = Math.min(textarea.scrollHeight, 200) + "px";
   };
 
-  // Auto-scroll to bottom if user is near the bottom
+  // Auto-scroll to bottom. Guard: don't hijack scroll when user has scrolled
+  // up to read prior messages (threshold 150px gives comfortable reading room).
   const scrollToBottom = useCallback(() => {
     const container = messageListRef.current;
     if (!container) return;
-    const isScrolledToBottom =
-      container.scrollTop + container.clientHeight >= container.scrollHeight - 20;
-    if (isScrolledToBottom) {
+    const isNearBottom =
+      container.scrollTop + container.clientHeight >= container.scrollHeight - 150;
+    if (isNearBottom) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, []);
