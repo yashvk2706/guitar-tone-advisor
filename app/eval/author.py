@@ -269,9 +269,14 @@ def retrieve_candidates(
 # ---------------------------------------------------------------------------
 
 
-def _format_candidate(idx_1based: int, cand: dict) -> str:
-    """Return the one-line preview string for a single candidate."""
-    preview = (cand["chunk_text"] or "").strip().replace("\n", " ")
+def _format_candidate(idx_1based: int, cand: dict, full_text: bool = False) -> str:
+    """Return the preview string for a single candidate."""
+    text = (cand["chunk_text"] or "").strip()
+    if full_text:
+        # Indent every line so the chunk is visually contained under the header.
+        indented = "\n".join(f"      {line}" for line in text.splitlines())
+        return f"  [{idx_1based}] ({cand['source_filename']})\n{indented}"
+    preview = text.replace("\n", " ")
     if len(preview) > _PREVIEW_CHARS:
         preview = preview[:_PREVIEW_CHARS].rstrip() + "..."
     return f"  [{idx_1based}] ({cand['source_filename']}) {preview}"
@@ -350,6 +355,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Number of candidate chunks to surface per draft query. "
         "Default: %(default)s",
     )
+    p.add_argument(
+        "--full-text",
+        action="store_true",
+        default=False,
+        help="Show the complete chunk text instead of the 200-char preview.",
+    )
     return p
 
 
@@ -387,7 +398,7 @@ def main(argv: list[str] | None = None) -> int:
                 continue
 
             for i, cand in enumerate(candidates, start=1):
-                print(_format_candidate(i, cand))
+                print(_format_candidate(i, cand, full_text=args.full_text))
 
             indices = _prompt_accept_indices(candidates)
             if indices is None:
