@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: In progress
-stopped_at: "Phase 5 Plan 02 complete (2026-05-28) — refusal contract smoke tests shipped"
-last_updated: "2026-05-28T17:47:00.000Z"
+status: Complete
+stopped_at: "Phase 5 Plan 03 complete (2026-05-28) — RAGAS faithfulness CLI shipped"
+last_updated: "2026-05-28T18:35:00.000Z"
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 19
-  completed_plans: 18
-  percent: 95
+  completed_plans: 19
+  percent: 100
 ---
 
 # State: Guitar Tone Advisor
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 | 2 | Retrieval Layer & Gear Aliases | Complete (3/3 plans) |
 | 3 | Grounded Generation & Minimal Chat UI | Complete (4/4 plans) |
 | 4 | UI Polish — Knobs, Markdown, Follow-ups | Complete (4/4) |
-| 5 | Evaluation Harness & Grounding Quality | In progress (1/3 plans complete) |
+| 5 | Evaluation Harness & Grounding Quality | Complete (3/3 plans complete) |
 
 ## Active Context
 
@@ -71,9 +71,10 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 - [Phase 5 Plan 01]: Retrieval recall scorer shipped: app/eval/retrieval.py (recall_at_k with any-hit semantics, reciprocal_rank, score_tuple delegating to retrieve() exclusively, load_last_run/append_run for eval/runs.jsonl, format_diff per D-11 with signed delta + direction arrow, build_parser with --held-out/--all/--k/--golden-set/--runs-log, main with fail-fast embedder before get_conn). tests/test_eval_retrieval.py: 9 tests (8 offline + 1 live-DB integration). Static guard test_no_fstring_sql_in_retrieval_scorer enforces T-05-04. 135 tests pass, 5 skipped. EVAL-02 satisfied.
 - [Phase 4 Plan 04]: FollowUpRail.tsx created with FOLLOW_UP_LABELS as module-level compile-time const (T-04-07 mitigated). Four-way render gate in MessageBubble: isLatestAssistant && citations !== undefined && !isStreaming && onFollowUp. lastAssistantIndex computed via messages.reduce() in an IIFE co-located with messages.map() to avoid polluting component scope. onFollowUp guard retained in MessageBubble even when ChatPage always passes it — keeps component safe for standalone use in tests. npm run build exits 0 — Phase 4 complete. CHAT-04 satisfied.
 - [Phase 5 Plan 02]: Refusal contract smoke tests (tests/test_eval_refusal.py): 4 tests — 3 offline unit (negative-assertion, empty-context refusal, adversarial-mismatch-no-knobs) + 1 live integration gated on ANTHROPIC_API_KEY. All tests call stream_response() directly via asyncio.run() — never via HTTP endpoint (Pitfall 5 avoided). _FakeAnthropicClient/_FakeAnthropicStream copied verbatim from test_generation.py. module-level REFUSAL_PHRASES and _KNOB_RE constants for assertion machinery. Task 2 was verification-only — 3 offline tests passed GREEN against existing generation layer with no production code changes. 138 tests pass, 6 skipped. EVAL-03 satisfied.
+- [Phase 5 Plan 03]: RAGAS faithfulness CLI shipped: app/eval/ragas.py (two-step claim decomposer — sync Anthropic for claim calls, asyncio.run() wrapper for answer generation via AsyncAnthropic). parse_claims/parse_support handle bare + fenced JSON and fail safe (T-05-08). Answer/claim text interpolated ONLY into user-role messages; CLAIM_EXTRACT_SYSTEM + CLAIM_SUPPORT_SYSTEM are fixed system prompts (T-05-02 injection boundary). faithfulness(0, 0) == 0.0 (T-05-08). Separate eval/faithfulness_runs.jsonl (not mixed with eval/runs.jsonl — A2). _FakeSyncClient uses .messages.create() only (distinct from _FakeAnthropicClient .stream() — Pitfall 6). 6 offline unit tests all pass GREEN. 144 tests pass, 6 skipped. EVAL-04 satisfied. Phase 5 complete.
 
 ## Session Continuity
 
-Last session: 2026-05-28T17:47:00.000Z
-Stopped at: Completed 05-02-PLAN.md — refusal contract smoke tests
+Last session: 2026-05-28T18:35:00.000Z
+Stopped at: Completed 05-03-PLAN.md — RAGAS faithfulness CLI. Phase 5 complete.
 Resume file: None

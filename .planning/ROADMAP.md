@@ -12,7 +12,7 @@
 - [x] **Phase 2: Retrieval Layer & Gear Aliases** — Wire HNSW cosine retrieval through the Embedder Protocol with bidirectional gear-alias query expansion
 - [x] **Phase 3: Grounded Generation & Minimal Chat UI** — End-to-end SSE-streamed answers with inline `[S{n}]` citations rendered in a minimal Next.js chat
 - [x] **Phase 4: UI Polish — Knobs, Markdown, Follow-ups** — Add rotary-knob settings, Markdown rendering, follow-up buttons, copy-to-clipboard, loading states, session history
-- [ ] **Phase 5: Evaluation Harness & Grounding Quality** — Score against the existing golden eval set (recall@K / MRR), empty-context refusal smoke test, RAGAS faithfulness
+- [x] **Phase 5: Evaluation Harness & Grounding Quality** — Score against the existing golden eval set (recall@K / MRR), empty-context refusal smoke test, RAGAS faithfulness
 
 ## Phase Details
 
@@ -106,7 +106,7 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 - [x] 05-02-PLAN.md — Empty-context + adversarial-mismatch refusal smoke tests in `tests/test_eval_refusal.py`, testing `stream_response()` directly (3 offline + 1 live-gated) [W2; EVAL-03]
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 05-03-PLAN.md — Custom RAGAS faithfulness CLI `python -m app.eval.ragas`: two-step anthropic claim decomposer, `eval/faithfulness_runs.jsonl` log [W3; EVAL-04]
+- [x] 05-03-PLAN.md — Custom RAGAS faithfulness CLI `python -m app.eval.ragas`: two-step anthropic claim decomposer, `eval/faithfulness_runs.jsonl` log [W3; EVAL-04]
 
 Cross-cutting constraints:
 - All eval modules must use `get_embedder()` — never import `openai` directly (CLAUDE.md Embedder Protocol)
@@ -120,7 +120,7 @@ Cross-cutting constraints:
 | 2. Retrieval Layer & Gear Aliases | 3/3 | Complete    | 2026-05-19 |
 | 3. Grounded Generation & Minimal Chat UI | 4/4 | Complete    | 2026-05-20 |
 | 4. UI Polish — Knobs, Markdown, Follow-ups | 4/4 | Complete    | 2026-05-22 |
-| 5. Evaluation Harness & Grounding Quality | 2/3 | In progress | - |
+| 5. Evaluation Harness & Grounding Quality | 3/3 | Complete    | 2026-05-28 |
 
 ---
 *Roadmap created 2026-05-15. Every v1 requirement maps to exactly one phase; coverage is 100%.*

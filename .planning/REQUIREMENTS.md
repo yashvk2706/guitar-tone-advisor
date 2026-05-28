@@ -57,7 +57,7 @@
 - [ ] **EVAL-01**: A golden eval set of ≥20 (query, expected-chunk-ids, expected-themes) tuples is built from the 10 forum-post topics, with a held-out subset written before any retrieval tuning begins
 - [ ] **EVAL-02**: Recall@K and MRR are computed against the golden eval set and logged after each retrieval configuration change
 - [ ] **EVAL-03**: An empty-context smoke test verifies the model produces a refusal (not a hallucinated answer) when zero chunks are retrieved
-- [ ] **EVAL-04**: RAGAS faithfulness scoring is computed on a sample of generated answers to measure the hallucination rate (claims in the answer not supported by retrieved chunks)
+- [x] **EVAL-04**: RAGAS faithfulness scoring is computed on a sample of generated answers to measure the hallucination rate (claims in the answer not supported by retrieved chunks)
 
 ## v2 Requirements
 
@@ -134,7 +134,7 @@ _Populated during roadmap creation 2026-05-15. Revised 2026-05-15: EVAL-01 moved
 | EVAL-01 | Phase 1 | Pending |
 | EVAL-02 | Phase 5 | Pending |
 | EVAL-03 | Phase 5 | Pending |
-| EVAL-04 | Phase 5 | Pending |
+| EVAL-04 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 33 total
