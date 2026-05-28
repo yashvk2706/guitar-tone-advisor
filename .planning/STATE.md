@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In progress
-stopped_at: "Phase 5 planned (2026-05-28) — 3 plans across 3 sequential waves"
-last_updated: "2026-05-28T00:00:00.000Z"
+stopped_at: "Phase 5 Plan 01 complete (2026-05-28) — retrieval recall scorer CLI shipped"
+last_updated: "2026-05-28T12:00:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 19
-  completed_plans: 16
-  percent: 84
+  completed_plans: 17
+  percent: 89
 ---
 
 # State: Guitar Tone Advisor
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 | 2 | Retrieval Layer & Gear Aliases | Complete (3/3 plans) |
 | 3 | Grounded Generation & Minimal Chat UI | Complete (4/4 plans) |
 | 4 | UI Polish — Knobs, Markdown, Follow-ups | Complete (4/4) |
-| 5 | Evaluation Harness & Grounding Quality | Ready to execute (3/3 plans) |
+| 5 | Evaluation Harness & Grounding Quality | In progress (1/3 plans complete) |
 
 ## Active Context
 
@@ -68,10 +68,11 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 - [Phase 4 Plan 01]: react-markdown v10.1.0 JSX mode satisfies T-03-14 (no dangerouslySetInnerHTML) and T-04-01 (no rehype-raw). MARKDOWN_COMPONENTS const maps 13 element types to Tailwind classes per UI-SPEC §Typography. streamingClass (▋ cursor) moved to outer bubble wrapper div — prevents cursor rendering inside react-markdown p/li elements. Copy-to-clipboard button added per UI-SPEC §7 (group-hover reveal, 2s Check feedback, navigator.clipboard.writeText). Node 22.17.0 required for npm install — Node 19 (system default) produces @tailwindcss/oxide native binding mismatch. UI-01, UI-02 satisfied.
 - [Phase 4 Plan 02]: matchAll() used over exec() loop for KNOB_RE to avoid stateful lastIndex mutation on module-level g-flag regex. arcPath() helper extracted in RotaryKnob.tsx for SVG geometry readability. valueD set to null when safeValue===0 to suppress zero-length arc SVG artifact. knobs computed inline (not useMemo) per UI-SPEC §5 note — parseKnobs is a single regex pass. T-04-03 mitigated: out-of-range values silently dropped in parseKnobs. UI-05 satisfied.
 - [Phase 4 Plan 03]: streamPhase state (idle/searching/drafting/done) alongside isStreaming — different concerns (isStreaming gates UI, streamPhase drives label text). hasFirstTokenRef (useRef) tracks first-token transition without re-firing setStreamPhase on every token. handleSubmit refactored to accept overrideMessage?: string; textarea clear gated on (overrideMessage === undefined). Send button changed to () => handleSubmit() to prevent SyntheticEvent leak. isLatestAssistant and onFollowUp forward-declared in MessageBubbleProps (prefixed _ in destructuring) for Plan 04 compatibility. Plan 01 had pre-wired copy button — Task 2 only added loadingLabel, aria-label, and FollowUpRail placeholder. UI-02, UI-03, UI-04 satisfied.
+- [Phase 5 Plan 01]: Retrieval recall scorer shipped: app/eval/retrieval.py (recall_at_k with any-hit semantics, reciprocal_rank, score_tuple delegating to retrieve() exclusively, load_last_run/append_run for eval/runs.jsonl, format_diff per D-11 with signed delta + direction arrow, build_parser with --held-out/--all/--k/--golden-set/--runs-log, main with fail-fast embedder before get_conn). tests/test_eval_retrieval.py: 9 tests (8 offline + 1 live-DB integration). Static guard test_no_fstring_sql_in_retrieval_scorer enforces T-05-04. 135 tests pass, 5 skipped. EVAL-02 satisfied.
 - [Phase 4 Plan 04]: FollowUpRail.tsx created with FOLLOW_UP_LABELS as module-level compile-time const (T-04-07 mitigated). Four-way render gate in MessageBubble: isLatestAssistant && citations !== undefined && !isStreaming && onFollowUp. lastAssistantIndex computed via messages.reduce() in an IIFE co-located with messages.map() to avoid polluting component scope. onFollowUp guard retained in MessageBubble even when ChatPage always passes it — keeps component safe for standalone use in tests. npm run build exits 0 — Phase 4 complete. CHAT-04 satisfied.
 
 ## Session Continuity
 
-Last session: 2026-05-27T17:49:18.971Z
-Stopped at: context exhaustion at 80% (2026-05-27)
+Last session: 2026-05-28T12:00:00.000Z
+Stopped at: Completed 05-01-PLAN.md — retrieval recall scorer CLI
 Resume file: None
