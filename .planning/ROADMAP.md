@@ -1,7 +1,7 @@
 # Roadmap: Guitar Tone Advisor
 
 **Created:** 2026-05-15
-**Last updated:** 2026-05-21 (Phase 4 planned — 4 plans across 3 waves)
+**Last updated:** 2026-05-28 (Phase 5 planned — 3 plans across 3 waves)
 **Granularity:** Standard
 **Project mode:** Vertical MVP — each phase ships an end-to-end working slice (or the smallest verifiable deliverable thereof)
 **Coverage:** 33/33 v1 requirements mapped (100%)
@@ -99,10 +99,11 @@ Plans:
   1. Running `python -m app.eval.retrieval` loads the existing `eval/golden_set.jsonl` (authored in Phase 1), prints recall@K and MRR, and appends the numbers to `eval/runs.jsonl` after each retrieval configuration change
   2. An automated smoke test passes when, given `retrieved_chunks=[]`, the generation layer returns a refusal (no fabricated knob settings, no hallucinated gear names)
   3. Running `python -m app.eval.ragas` on a sample of generated answers prints a faithfulness score and logs per-claim support evidence
-**Plans:**
-  - Plan 1: Retrieval scorer against the existing golden eval set [EVAL-02] (loads `eval/golden_set.jsonl` from Phase 1 — does NOT author it; computes recall@K and MRR; `eval/runs.jsonl` append-only log; CLI prints diff vs previous run)
-  - Plan 2: Empty-context + wrong-context refusal smoke tests [EVAL-03] (pytest cases that fail loudly if the model fabricates with no chunks or with adversarially mismatched chunks)
-  - Plan 3: RAGAS faithfulness pipeline [EVAL-04] (sample answers, claim-by-claim support check against retrieved chunks, score logged per run)
+**Plans:** 3 plans across 3 sequential waves
+Plans:
+- [ ] 05-01-PLAN.md — Retrieval scorer CLI `python -m app.eval.retrieval`: recall@1/5/8 + MRR (any-hit) against `eval/golden_set.jsonl`, append-only `eval/runs.jsonl`, diff vs previous run [W1; EVAL-02]
+- [ ] 05-02-PLAN.md — Empty-context + adversarial-mismatch refusal smoke tests in `tests/test_eval_refusal.py`, testing `stream_response()` directly (3 offline + 1 live-gated) [W2; EVAL-03]
+- [ ] 05-03-PLAN.md — Custom RAGAS faithfulness CLI `python -m app.eval.ragas`: two-step anthropic claim decomposer, `eval/faithfulness_runs.jsonl` log [W3; EVAL-04]
 
 ## Progress
 
@@ -112,7 +113,7 @@ Plans:
 | 2. Retrieval Layer & Gear Aliases | 3/3 | Complete    | 2026-05-19 |
 | 3. Grounded Generation & Minimal Chat UI | 4/4 | Complete    | 2026-05-20 |
 | 4. UI Polish — Knobs, Markdown, Follow-ups | 4/4 | Complete    | 2026-05-22 |
-| 5. Evaluation Harness & Grounding Quality | 0/3 | Not started | - |
+| 5. Evaluation Harness & Grounding Quality | 0/3 | Planned | - |
 
 ---
 *Roadmap created 2026-05-15. Every v1 requirement maps to exactly one phase; coverage is 100%.*
@@ -120,4 +121,5 @@ Plans:
 *Revision 2026-05-15: Phase 1 plan files finalized as `01-01-PLAN.md` through `01-05-PLAN.md`; SKELETON.md (Walking Skeleton) added; wave structure W1→W2→W3 (Plans 03+04 parallel)→W4 documented.*
 *Revision 2026-05-19: Phase 2 planned — 3 plans across 3 sequential waves. 02-01 alias file/expansion, 02-02 dense retrieval (ChunkResult + retrieve()), 02-03 test suite + static guards.*
 *Revision 2026-05-19: Phase 3 planned — 4 plans across 3 waves. W1: 03-01 (generation module + Wave 0 test stubs) + 03-02 (session memory + test stubs) in parallel; W2: 03-03 (FastAPI app + test stubs); W3: 03-04 (Next.js chat UI + human checkpoint).*
+*Revision 2026-05-28: Phase 5 planned — 3 plans across 3 sequential waves. W1: 05-01 (retrieval recall scorer + runs.jsonl); W2: 05-02 (refusal smoke tests); W3: 05-03 (custom RAGAS faithfulness CLI). All 3 requirements covered: EVAL-02, EVAL-03, EVAL-04. Each plan leads with a Wave 0 failing-test stub task (RED) before implementation.*
 *Revision 2026-05-21: Phase 4 planned — 4 plans across 3 waves. W1: 04-01 (react-markdown); W2: 04-02 (rotary knobs) + 04-03 (loading state + copy button) in parallel; W3: 04-04 (follow-up rail). All 6 requirements covered: CHAT-04, UI-01 through UI-05.*
