@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In progress
-stopped_at: "Phase 5 Plan 01 complete (2026-05-28) — retrieval recall scorer CLI shipped"
-last_updated: "2026-05-28T12:00:00.000Z"
+stopped_at: "Phase 5 Plan 02 complete (2026-05-28) — refusal contract smoke tests shipped"
+last_updated: "2026-05-28T17:47:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 19
-  completed_plans: 17
-  percent: 89
+  completed_plans: 18
+  percent: 95
 ---
 
 # State: Guitar Tone Advisor
@@ -70,9 +70,10 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 - [Phase 4 Plan 03]: streamPhase state (idle/searching/drafting/done) alongside isStreaming — different concerns (isStreaming gates UI, streamPhase drives label text). hasFirstTokenRef (useRef) tracks first-token transition without re-firing setStreamPhase on every token. handleSubmit refactored to accept overrideMessage?: string; textarea clear gated on (overrideMessage === undefined). Send button changed to () => handleSubmit() to prevent SyntheticEvent leak. isLatestAssistant and onFollowUp forward-declared in MessageBubbleProps (prefixed _ in destructuring) for Plan 04 compatibility. Plan 01 had pre-wired copy button — Task 2 only added loadingLabel, aria-label, and FollowUpRail placeholder. UI-02, UI-03, UI-04 satisfied.
 - [Phase 5 Plan 01]: Retrieval recall scorer shipped: app/eval/retrieval.py (recall_at_k with any-hit semantics, reciprocal_rank, score_tuple delegating to retrieve() exclusively, load_last_run/append_run for eval/runs.jsonl, format_diff per D-11 with signed delta + direction arrow, build_parser with --held-out/--all/--k/--golden-set/--runs-log, main with fail-fast embedder before get_conn). tests/test_eval_retrieval.py: 9 tests (8 offline + 1 live-DB integration). Static guard test_no_fstring_sql_in_retrieval_scorer enforces T-05-04. 135 tests pass, 5 skipped. EVAL-02 satisfied.
 - [Phase 4 Plan 04]: FollowUpRail.tsx created with FOLLOW_UP_LABELS as module-level compile-time const (T-04-07 mitigated). Four-way render gate in MessageBubble: isLatestAssistant && citations !== undefined && !isStreaming && onFollowUp. lastAssistantIndex computed via messages.reduce() in an IIFE co-located with messages.map() to avoid polluting component scope. onFollowUp guard retained in MessageBubble even when ChatPage always passes it — keeps component safe for standalone use in tests. npm run build exits 0 — Phase 4 complete. CHAT-04 satisfied.
+- [Phase 5 Plan 02]: Refusal contract smoke tests (tests/test_eval_refusal.py): 4 tests — 3 offline unit (negative-assertion, empty-context refusal, adversarial-mismatch-no-knobs) + 1 live integration gated on ANTHROPIC_API_KEY. All tests call stream_response() directly via asyncio.run() — never via HTTP endpoint (Pitfall 5 avoided). _FakeAnthropicClient/_FakeAnthropicStream copied verbatim from test_generation.py. module-level REFUSAL_PHRASES and _KNOB_RE constants for assertion machinery. Task 2 was verification-only — 3 offline tests passed GREEN against existing generation layer with no production code changes. 138 tests pass, 6 skipped. EVAL-03 satisfied.
 
 ## Session Continuity
 
-Last session: 2026-05-28T12:00:00.000Z
-Stopped at: Completed 05-01-PLAN.md — retrieval recall scorer CLI
+Last session: 2026-05-28T17:47:00.000Z
+Stopped at: Completed 05-02-PLAN.md — refusal contract smoke tests
 Resume file: None
