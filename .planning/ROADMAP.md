@@ -101,9 +101,16 @@ Plans:
   3. Running `python -m app.eval.ragas` on a sample of generated answers prints a faithfulness score and logs per-claim support evidence
 **Plans:** 3 plans across 3 sequential waves
 Plans:
+**Wave 1**
 - [ ] 05-01-PLAN.md — Retrieval scorer CLI `python -m app.eval.retrieval`: recall@1/5/8 + MRR (any-hit) against `eval/golden_set.jsonl`, append-only `eval/runs.jsonl`, diff vs previous run [W1; EVAL-02]
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 05-02-PLAN.md — Empty-context + adversarial-mismatch refusal smoke tests in `tests/test_eval_refusal.py`, testing `stream_response()` directly (3 offline + 1 live-gated) [W2; EVAL-03]
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 05-03-PLAN.md — Custom RAGAS faithfulness CLI `python -m app.eval.ragas`: two-step anthropic claim decomposer, `eval/faithfulness_runs.jsonl` log [W3; EVAL-04]
+
+Cross-cutting constraints:
+- All eval modules must use `get_embedder()` — never import `openai` directly (CLAUDE.md Embedder Protocol)
+- Wave 0 test stubs (failing) must be committed before each plan's implementation task runs
 
 ## Progress
 
@@ -113,7 +120,7 @@ Plans:
 | 2. Retrieval Layer & Gear Aliases | 3/3 | Complete    | 2026-05-19 |
 | 3. Grounded Generation & Minimal Chat UI | 4/4 | Complete    | 2026-05-20 |
 | 4. UI Polish — Knobs, Markdown, Follow-ups | 4/4 | Complete    | 2026-05-22 |
-| 5. Evaluation Harness & Grounding Quality | 0/3 | Planned | - |
+| 5. Evaluation Harness & Grounding Quality | 0/3 | Ready to execute | - |
 
 ---
 *Roadmap created 2026-05-15. Every v1 requirement maps to exactly one phase; coverage is 100%.*

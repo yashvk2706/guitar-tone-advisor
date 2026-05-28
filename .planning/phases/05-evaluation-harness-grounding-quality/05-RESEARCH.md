@@ -735,7 +735,7 @@ if __name__ == "__main__":
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should faithfulness_runs.jsonl be separate from runs.jsonl?**
    - What we know: D-10 defines a retrieval-specific schema. The diff logic in Plan 1 reads the last line expecting retrieval fields.

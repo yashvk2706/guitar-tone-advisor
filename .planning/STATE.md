@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In progress
-stopped_at: "Phase 5 context gathered (2026-05-27)"
-last_updated: "2026-05-27T17:49:18.982Z"
+stopped_at: "Phase 5 planned (2026-05-28) — 3 plans across 3 sequential waves"
+last_updated: "2026-05-28T00:00:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 16
+  total_plans: 19
   completed_plans: 16
-  percent: 80
+  percent: 84
 ---
 
 # State: Guitar Tone Advisor
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 | 2 | Retrieval Layer & Gear Aliases | Complete (3/3 plans) |
 | 3 | Grounded Generation & Minimal Chat UI | Complete (4/4 plans) |
 | 4 | UI Polish — Knobs, Markdown, Follow-ups | Complete (4/4) |
-| 5 | Evaluation Harness & Grounding Quality | Not Started |
+| 5 | Evaluation Harness & Grounding Quality | Ready to execute (3/3 plans) |
 
 ## Active Context
 
