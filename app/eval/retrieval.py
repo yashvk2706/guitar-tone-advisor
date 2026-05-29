@@ -86,13 +86,23 @@ def score_tuple(
 
     Args:
         t:        GoldenTuple to score.
-        k:        Maximum retrieval depth (default 8).
+        k:        Maximum retrieval depth (default 8, must be >= 8).
         conn:     Injected psycopg3 connection for testing.
         embedder: Injected Embedder instance for testing.
 
     Returns:
         dict with keys recall_at_1, recall_at_5, recall_at_8, rr.
+
+    Raises:
+        ValueError: If k < 8 — the fixed cutoffs (1, 5, 8) would produce
+            misleading metric labels when k < 8 (WR-01 fix).
     """
+    if k < 8:
+        raise ValueError(
+            f"k={k} is below the minimum required cutoff of 8. "
+            "recall@8 requires at least k=8 retrieved results. "
+            "Pass --k 8 or higher."
+        )
     results: list[ChunkResult] = retrieve(t.query, k=k, conn=conn, embedder=embedder)
     retrieved_ids = [r.chunk_id for r in results]
 
@@ -172,11 +182,17 @@ def format_diff(current: dict, prior: dict | None) -> str:
         ("recall_at_8", "recall@8"),
         ("mrr", "MRR"),
     ]:
-        prev_val = prior[key]
+        # Use .get() so a missing or schema-mismatched prior record (e.g. hand-
+        # edited, future schema change) renders "n/a" rather than raising KeyError
+        # (WR-02 fix).
+        prev_val = prior.get(key)
         curr_val = current[key]
-        delta = curr_val - prev_val
-        arrow = "↑" if delta > 0 else ("↓" if delta < 0 else "→")
-        parts.append(f"{label}: {prev_val:.2f} → {curr_val:.2f} ({delta:+.2f} {arrow})")
+        if prev_val is None:
+            parts.append(f"{label}: n/a → {curr_val:.2f}")
+        else:
+            delta = curr_val - prev_val
+            arrow = "↑" if delta > 0 else ("↓" if delta < 0 else "→")
+            parts.append(f"{label}: {prev_val:.2f} → {curr_val:.2f} ({delta:+.2f} {arrow})")
 
     return "  ".join(parts)
 
@@ -213,7 +229,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--k",
         type=int,
         default=8,
-        help="Maximum retrieval depth for recall@K (default: 8).",
+        help=(
+            "Maximum retrieval depth for recall@K (default: 8, minimum: 8). "
+            "Must be >= 8 because recall@8 is one of the fixed scoring cutoffs. "
+            "Values below 8 raise ValueError to prevent misleading metric labels."
+        ),
     )
     p.add_argument(
         "--golden-set",
@@ -293,8 +313,19 @@ def main(argv: list[str] | None = None) -> int:
             "embedding_model": get_settings().embedding_model,
         }
 
-        # Load prior run for diff
-        prior = load_last_run(args.runs_log)
+        # Load prior run for diff — only compare if scopes match (WR-03 fix).
+        # Comparing held_out metrics against all-set metrics produces a delta
+        # with no statistical meaning; warn and suppress the diff instead.
+        prior_raw = load_last_run(args.runs_log)
+        if prior_raw and prior_raw.get("scope") != scope:
+            print(
+                f"  (prior run scope={prior_raw.get('scope')!r} differs from "
+                f"current scope={scope!r} — no diff shown)",
+                file=sys.stderr,
+            )
+            prior = None
+        else:
+            prior = prior_raw
 
         # Print diff to stdout
         print(format_diff(current_record, prior))
