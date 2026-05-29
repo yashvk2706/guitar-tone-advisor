@@ -25,9 +25,14 @@ the pgvector adapter registered by ``app.db.get_conn`` adapts them to
 from __future__ import annotations
 
 import json
+import uuid
 from typing import Sequence
 
 import psycopg
+
+# Stable namespace for deterministic chunk UUIDs derived from content_hash.
+# Changing this value would invalidate all existing chunk IDs — never change it.
+_CHUNK_NS = uuid.UUID("c4e8b75f-2a3d-4f8e-9b1c-0d2e5f6a7b8c")
 
 from app.ingest.chunker import Chunk
 from app.ingest.loader import RawDocument
@@ -172,10 +177,10 @@ def upsert_chunks(
 
     sql = """
         INSERT INTO chunks (
-            document_id, source_type, chunk_index, chunk_text, content_hash,
+            id, document_id, source_type, chunk_index, chunk_text, content_hash,
             token_count, embedding_model, embedding, metadata_json
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (document_id, chunk_index, embedding_model) DO UPDATE SET
             chunk_text    = EXCLUDED.chunk_text,
             content_hash  = EXCLUDED.content_hash,
@@ -185,6 +190,7 @@ def upsert_chunks(
     """
     params = [
         (
+            str(uuid.uuid5(_CHUNK_NS, c.content_hash)),
             document_id,
             _PHASE_1_SOURCE_TYPE,
             c.chunk_index,
