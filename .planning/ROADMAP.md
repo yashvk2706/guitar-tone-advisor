@@ -1,7 +1,7 @@
 # Roadmap: Guitar Tone Advisor
 
 **Created:** 2026-05-15
-**Last updated:** 2026-05-28 (Phase 5 planned — 3 plans across 3 waves)
+**Last updated:** 2026-05-29 (Phase 6 + Phase 7 added)
 **Granularity:** Standard
 **Project mode:** Vertical MVP — each phase ships an end-to-end working slice (or the smallest verifiable deliverable thereof)
 **Coverage:** 33/33 v1 requirements mapped (100%)
@@ -13,6 +13,8 @@
 - [x] **Phase 3: Grounded Generation & Minimal Chat UI** — End-to-end SSE-streamed answers with inline `[S{n}]` citations rendered in a minimal Next.js chat
 - [x] **Phase 4: UI Polish — Knobs, Markdown, Follow-ups** — Add rotary-knob settings, Markdown rendering, follow-up buttons, copy-to-clipboard, loading states, session history
 - [x] **Phase 5: Evaluation Harness & Grounding Quality** — Score against the existing golden eval set (recall@K / MRR), empty-context refusal smoke test, RAGAS faithfulness
+- [ ] **Phase 6: Full Corpus Ingestion** — Extend the ingest pipeline to handle PDF manuals, YouTube transcripts, and web articles; run the full pipeline and verify eval scores improve
+- [ ] **Phase 7: Persistent Corpus & Cloud Deployment** — Confirm corpus persists without re-ingestion across Docker restarts; deploy app to AWS (EC2 + managed Postgres with pgvector) at a public HTTPS URL with pre-seeded corpus
 
 ## Phase Details
 
@@ -112,6 +114,33 @@ Cross-cutting constraints:
 - All eval modules must use `get_embedder()` — never import `openai` directly (CLAUDE.md Embedder Protocol)
 - Wave 0 test stubs (failing) must be committed before each plan's implementation task runs
 
+### Phase 6: Full Corpus Ingestion
+**Goal:** Extend the ingest pipeline to handle all three remaining source types — PDF equipment manuals, YouTube transcripts, and web articles — then run the full pipeline against `raw_data/` and verify that eval scores (recall@K, faithfulness) improve meaningfully over the forum-only baseline. The ingest architecture already dispatches on `source_type`; Phase 6 implements the three `NotImplementedError` branches.
+**Mode:** mvp
+**Depends on:** Phase 5 (eval harness must exist to measure improvement)
+**Requirements:** INGEST-08, INGEST-09, INGEST-10, EVAL-05
+**Success Criteria** (what must be TRUE):
+  1. `python -m app.ingest.pipeline` with no flags ingests all four source types: forum posts, PDF manuals (`raw_data/manuals/` — 15 PDFs), YouTube transcripts (`raw_data/youtube_ids.txt` — 15 IDs), and web articles (`raw_data/article_urls.txt` — 9 URLs); chunk count grows from 21 to ≥200
+  2. PDF chunker never splits inside a table; `pymupdf4llm` is used as an escalation path for table-heavy pages (CLAUDE.md hard constraint)
+  3. YouTube loader uses `youtube-transcript-api` with `yt-dlp` as fallback; transcripts are chunked into 300–500-token windows
+  4. Article scraper uses `trafilatura`; boilerplate (nav, ads, footers) is stripped before chunking
+  5. Re-running the pipeline on unchanged input embeds zero new chunks (content-hash dedup still holds across all source types)
+  6. After full ingest, `python -m app.eval.retrieval` shows recall@8 ≥ 1.0 and MRR ≥ 0.9 on the held-out set; `python -m app.eval.ragas` shows mean faithfulness ≥ 0.5
+**Plans:** Not planned yet
+
+### Phase 7: Persistent Corpus & Cloud Deployment
+**Goal:** (1) Confirm the corpus persists across Docker restarts without re-ingestion — `docker-compose.yml` already has a `pgdata` named volume; the key constraint is that `docker-compose down -v` destroys it and must never be used in normal operation (document this clearly). (2) Deploy the full app to AWS using available free credits so others can access it at a public HTTPS URL — containerised FastAPI + Next.js, Postgres + pgvector on AWS (RDS or EC2-hosted Docker), API keys managed via AWS Secrets Manager or EC2 environment, corpus pre-seeded so no manual pipeline run is needed after deploy.
+**Mode:** mvp
+**Depends on:** Phase 6 (full corpus must be ingested before deployment is meaningful)
+**Requirements:** PERSIST-01, DEPLOY-01, DEPLOY-02, DEPLOY-03, DEPLOY-04, DEPLOY-05
+**Success Criteria** (what must be TRUE):
+  1. `docker-compose up -d` followed by `docker-compose down` (without `-v`) followed by `docker-compose up -d` retains all ingested chunks — no re-ingestion needed; this is documented in a `RUNNING.md` warning block
+  2. A `Dockerfile` exists for the FastAPI backend and the Next.js frontend is built and served (or deployed to Vercel); a `docker-compose.prod.yml` wires them together for the AWS target
+  3. The app is reachable at a public HTTPS URL (nginx + Let's Encrypt or Caddy); the `/health` endpoint returns `{"status": "ok"}` over HTTPS
+  4. API keys (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`) are stored as AWS Secrets Manager secrets or EC2 instance env vars — never committed to the repo
+  5. The deployed Postgres instance has the full corpus pre-seeded (pg_dump/restore or pipeline run as a one-time deploy step); a fresh user visiting the URL can ask a tone question and receive a cited answer without any manual setup
+**Plans:** Not planned yet
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -121,6 +150,8 @@ Cross-cutting constraints:
 | 3. Grounded Generation & Minimal Chat UI | 4/4 | Complete    | 2026-05-20 |
 | 4. UI Polish — Knobs, Markdown, Follow-ups | 4/4 | Complete    | 2026-05-22 |
 | 5. Evaluation Harness & Grounding Quality | 3/3 | Complete    | 2026-05-28 |
+| 6. Full Corpus Ingestion | 0/? | Not planned | — |
+| 7. Persistent Corpus & Cloud Deployment | 0/? | Not planned | — |
 
 ---
 *Roadmap created 2026-05-15. Every v1 requirement maps to exactly one phase; coverage is 100%.*
@@ -130,3 +161,4 @@ Cross-cutting constraints:
 *Revision 2026-05-19: Phase 3 planned — 4 plans across 3 waves. W1: 03-01 (generation module + Wave 0 test stubs) + 03-02 (session memory + test stubs) in parallel; W2: 03-03 (FastAPI app + test stubs); W3: 03-04 (Next.js chat UI + human checkpoint).*
 *Revision 2026-05-28: Phase 5 planned — 3 plans across 3 sequential waves. W1: 05-01 (retrieval recall scorer + runs.jsonl); W2: 05-02 (refusal smoke tests); W3: 05-03 (custom RAGAS faithfulness CLI). All 3 requirements covered: EVAL-02, EVAL-03, EVAL-04. Each plan leads with a Wave 0 failing-test stub task (RED) before implementation.*
 *Revision 2026-05-21: Phase 4 planned — 4 plans across 3 waves. W1: 04-01 (react-markdown); W2: 04-02 (rotary knobs) + 04-03 (loading state + copy button) in parallel; W3: 04-04 (follow-up rail). All 6 requirements covered: CHAT-04, UI-01 through UI-05.*
+*Revision 2026-05-29: Phase 6 added — Full Corpus Ingestion (PDF manuals, YouTube transcripts, web articles; eval score improvement gate). Phase 7 added — Persistent Corpus & Cloud Deployment (Docker volume persistence documentation + AWS EC2 deployment with pre-seeded corpus at public HTTPS URL).*

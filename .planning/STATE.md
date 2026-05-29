@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Complete
-stopped_at: "Phase 5 Plan 03 complete (2026-05-28) — RAGAS faithfulness CLI shipped"
-last_updated: "2026-05-28T18:35:00.000Z"
+status: Planning
+stopped_at: "Phase 5 fully verified (2026-05-29) — all 3 UAT items cleared; Phase 6 + Phase 7 added to roadmap"
+last_updated: "2026-05-29T00:00:00.000Z"
 progress:
-  total_phases: 5
+  total_phases: 7
   completed_phases: 5
   total_plans: 19
   completed_plans: 19
-  percent: 100
+  percent: 71
 ---
 
 # State: Guitar Tone Advisor
@@ -73,8 +73,13 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 - [Phase 5 Plan 02]: Refusal contract smoke tests (tests/test_eval_refusal.py): 4 tests — 3 offline unit (negative-assertion, empty-context refusal, adversarial-mismatch-no-knobs) + 1 live integration gated on ANTHROPIC_API_KEY. All tests call stream_response() directly via asyncio.run() — never via HTTP endpoint (Pitfall 5 avoided). _FakeAnthropicClient/_FakeAnthropicStream copied verbatim from test_generation.py. module-level REFUSAL_PHRASES and _KNOB_RE constants for assertion machinery. Task 2 was verification-only — 3 offline tests passed GREEN against existing generation layer with no production code changes. 138 tests pass, 6 skipped. EVAL-03 satisfied.
 - [Phase 5 Plan 03]: RAGAS faithfulness CLI shipped: app/eval/ragas.py (two-step claim decomposer — sync Anthropic for claim calls, asyncio.run() wrapper for answer generation via AsyncAnthropic). parse_claims/parse_support handle bare + fenced JSON and fail safe (T-05-08). Answer/claim text interpolated ONLY into user-role messages; CLAIM_EXTRACT_SYSTEM + CLAIM_SUPPORT_SYSTEM are fixed system prompts (T-05-02 injection boundary). faithfulness(0, 0) == 0.0 (T-05-08). Separate eval/faithfulness_runs.jsonl (not mixed with eval/runs.jsonl — A2). _FakeSyncClient uses .messages.create() only (distinct from _FakeAnthropicClient .stream() — Pitfall 6). 6 offline unit tests all pass GREEN. 144 tests pass, 6 skipped. EVAL-04 satisfied. Phase 5 complete.
 
+## Roadmap Evolution
+
+- Phase 6 added: Full Corpus Ingestion (PDF manuals, YouTube transcripts, web articles; eval score improvement gate)
+- Phase 7 added: Persistent Corpus & Cloud Deployment (Docker volume persistence docs + AWS EC2 at public HTTPS URL with pre-seeded corpus)
+
 ## Session Continuity
 
-Last session: 2026-05-28T18:35:00.000Z
-Stopped at: Completed 05-03-PLAN.md — RAGAS faithfulness CLI. Phase 5 complete.
+Last session: 2026-05-29T00:00:00.000Z
+Stopped at: Phase 5 fully verified (all 3 UAT items cleared). Phase 6 + Phase 7 added to roadmap. Ready to plan Phase 6.
 Resume file: None
