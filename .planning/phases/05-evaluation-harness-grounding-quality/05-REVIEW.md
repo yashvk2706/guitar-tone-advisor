@@ -14,7 +14,14 @@ findings:
   warning: 5
   info: 4
   total: 11
-status: issues_found
+findings_resolved:
+  critical: 2
+  warning: 4
+  info: 0
+  skipped: 1
+  skipped_ids: [WR-05]
+status: fixed
+fixed_at: 2026-05-29T00:00:00Z
 ---
 
 # Phase 05: Code Review Report
