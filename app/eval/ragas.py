@@ -175,19 +175,19 @@ def faithfulness(supported: int, total: int) -> float:
 
 
 def generate_answer_sync(
-    client: AsyncAnthropic,
     query: str,
     sources_with_ids: list,
 ) -> str:
     """Synchronously collect the full answer text from stream_response().
 
     Wraps the async generator in asyncio.run() so the sync RAGAS CLI can
-    invoke it without a running event loop. The AsyncAnthropic client is ONLY
-    used inside this wrapper — claim decomposition uses the sync Anthropic
-    client.
+    invoke it without a running event loop. A fresh AsyncAnthropic client is
+    constructed inside the coroutine so its lifetime is bound to the event
+    loop created by asyncio.run() — reusing a client across multiple
+    asyncio.run() calls would orphan the httpx connection pool each time the
+    loop closes (CR-01 fix).
 
     Args:
-        client:           AsyncAnthropic instance.
         query:            The user query for this golden tuple.
         sources_with_ids: List of (ChunkResult, sn) pairs from retrieve().
 
@@ -195,18 +195,19 @@ def generate_answer_sync(
         Full response text concatenated from token events.
     """
     async def _run() -> str:
-        parts: list[str] = []
-        async for sse in stream_response(
-            client=client,
-            system_blocks=build_system_blocks(),
-            messages=build_messages([], query, sources_with_ids),
-            sources_with_ids=sources_with_ids,
-            session_id="eval-faithfulness",
-        ):
-            if sse.event is None:
-                payload = json.loads(sse.data)
-                if "text" in payload:
-                    parts.append(payload["text"])
+        async with AsyncAnthropic() as client:
+            parts: list[str] = []
+            async for sse in stream_response(
+                client=client,
+                system_blocks=build_system_blocks(),
+                messages=build_messages([], query, sources_with_ids),
+                sources_with_ids=sources_with_ids,
+                session_id="eval-faithfulness",
+            ):
+                if sse.event is None:
+                    payload = json.loads(sse.data)
+                    if "text" in payload:
+                        parts.append(payload["text"])
         return "".join(parts)
 
     return asyncio.run(_run())
@@ -222,39 +223,35 @@ def score_tuple_faithfulness(
     k: int = 8,
     conn=None,
     embedder=None,
-    async_client: AsyncAnthropic | None = None,
     sync_client: Anthropic | None = None,
 ) -> dict:
     """Score faithfulness for one golden tuple.
 
     Steps:
     1. Retrieve top-k chunks for the tuple's query.
-    2. Generate a live answer via the async Anthropic client.
+    2. Generate a live answer (AsyncAnthropic client is created internally
+       per-call so its lifetime is scoped to each asyncio.run() event loop).
     3. Extract atomic claims from the answer via the sync client.
     4. Per claim, check grounding against the retrieved chunks.
     5. Return per-query dict with faithfulness score.
 
     Args:
-        t:            GoldenTuple to evaluate.
-        k:            Number of chunks to retrieve (default 8).
-        conn:         Injected psycopg3 connection (None → get_conn()).
-        embedder:     Injected Embedder (None → get_embedder()).
-        async_client: AsyncAnthropic instance for answer generation.
-        sync_client:  Anthropic sync instance for claim decomposition.
+        t:           GoldenTuple to evaluate.
+        k:           Number of chunks to retrieve (default 8).
+        conn:        Injected psycopg3 connection (None → get_conn()).
+        embedder:    Injected Embedder (None → get_embedder()).
+        sync_client: Anthropic sync instance for claim decomposition.
 
     Returns:
         Dict with keys: query, faithfulness, total_claims, supported_claims.
     """
     from app.config import get_settings
 
-    _conn = conn
-    _embedder = embedder
-
-    chunks: list[ChunkResult] = retrieve(t.query, k=k, conn=_conn, embedder=_embedder)
+    chunks: list[ChunkResult] = retrieve(t.query, k=k, conn=conn, embedder=embedder)
     sources_with_ids = [(c, i + 1) for i, c in enumerate(chunks)]
 
-    # Step 1: Generate live answer
-    answer_text = generate_answer_sync(async_client, t.query, sources_with_ids)
+    # Step 1: Generate live answer — AsyncAnthropic client created inside
+    answer_text = generate_answer_sync(t.query, sources_with_ids)
 
     # Step 2: Extract claims — answer text goes ONLY into user-role message
     claim_resp = sync_client.messages.create(
@@ -268,7 +265,9 @@ def score_tuple_faithfulness(
             }
         ],
     )
-    claims = parse_claims(claim_resp.content[0].text)
+    # Guard: content may be empty on API refusal or safety block (CR-02 fix)
+    claim_text = claim_resp.content[0].text if claim_resp.content else ""
+    claims = parse_claims(claim_text)
 
     # Step 3: Check each claim — claim text goes ONLY into user-role message
     chunk_texts = "\n---\n".join(c.text for c in chunks)
@@ -290,7 +289,9 @@ def score_tuple_faithfulness(
                 }
             ],
         )
-        if parse_support(support_resp.content[0].text):
+        # Guard: content may be empty on API refusal or safety block (CR-02 fix)
+        support_text = support_resp.content[0].text if support_resp.content else ""
+        if parse_support(support_text):
             supported_count += 1
 
     return {
@@ -391,7 +392,6 @@ def main(argv: list[str] | None = None) -> int:
     conn = get_conn()
     try:
         sync_client = Anthropic()
-        async_client = AsyncAnthropic()
 
         tuples = load_golden_set(args.golden_set)
         if args.held_out:
@@ -406,30 +406,46 @@ def main(argv: list[str] | None = None) -> int:
 
         per_query: list[dict] = []
         for t in sample:
-            result = score_tuple_faithfulness(
-                t,
-                k=8,
-                conn=conn,
-                embedder=embedder,
-                async_client=async_client,
-                sync_client=sync_client,
-            )
+            try:
+                result = score_tuple_faithfulness(
+                    t,
+                    k=8,
+                    conn=conn,
+                    embedder=embedder,
+                    sync_client=sync_client,
+                )
+            except Exception as e:
+                print(
+                    f"  ERROR scoring {t.query[:60]!r}: {e!r}",
+                    file=sys.stderr,
+                )
+                result = {
+                    "query": t.query,
+                    "faithfulness": None,
+                    "total_claims": None,
+                    "supported_claims": None,
+                    "error": repr(e),
+                }
             per_query.append(result)
 
             # Print per-query line to stdout
             query_preview = t.query[:60] + "..." if len(t.query) > 60 else t.query
-            print(
-                f"  {query_preview!r}: faithfulness={result['faithfulness']:.2f} "
-                f"({result['supported_claims']}/{result['total_claims']} claims supported)"
-            )
+            if result.get("error"):
+                print(f"  {query_preview!r}: ERROR — {result['error']}")
+            else:
+                print(
+                    f"  {query_preview!r}: faithfulness={result['faithfulness']:.2f} "
+                    f"({result['supported_claims']}/{result['total_claims']} claims supported)"
+                )
 
         print()
+        successful = [r for r in per_query if r.get("faithfulness") is not None]
         mean_faith = (
-            sum(r["faithfulness"] for r in per_query) / len(per_query)
-            if per_query
+            sum(r["faithfulness"] for r in successful) / len(successful)
+            if successful
             else 0.0
         )
-        print(f"Mean faithfulness: {mean_faith:.2f} across {len(per_query)} queries")
+        print(f"Mean faithfulness: {mean_faith:.2f} across {len(successful)} queries")
 
         settings = get_settings()
         record = {
