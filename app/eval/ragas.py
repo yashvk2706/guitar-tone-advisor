@@ -195,7 +195,8 @@ def generate_answer_sync(
         Full response text concatenated from token events.
     """
     async def _run() -> str:
-        async with AsyncAnthropic() as client:
+        from app.config import get_settings
+        async with AsyncAnthropic(api_key=get_settings().anthropic_api_key) as client:
             parts: list[str] = []
             async for sse in stream_response(
                 client=client,
@@ -391,7 +392,8 @@ def main(argv: list[str] | None = None) -> int:
 
     conn = get_conn()
     try:
-        sync_client = Anthropic()
+        settings = get_settings()
+        sync_client = Anthropic(api_key=settings.anthropic_api_key)
 
         tuples = load_golden_set(args.golden_set)
         if args.held_out:
