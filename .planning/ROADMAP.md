@@ -1,7 +1,7 @@
 # Roadmap: Guitar Tone Advisor
 
 **Created:** 2026-05-15
-**Last updated:** 2026-05-29 (Phase 6 + Phase 7 added)
+**Last updated:** 2026-05-29 (Phase 6 planned — 5 plans across 4 waves)
 **Granularity:** Standard
 **Project mode:** Vertical MVP — each phase ships an end-to-end working slice (or the smallest verifiable deliverable thereof)
 **Coverage:** 33/33 v1 requirements mapped (100%)
@@ -120,13 +120,26 @@ Cross-cutting constraints:
 **Depends on:** Phase 5 (eval harness must exist to measure improvement)
 **Requirements:** INGEST-08, INGEST-09, INGEST-10, EVAL-05
 **Success Criteria** (what must be TRUE):
-  1. `python -m app.ingest.pipeline` with no flags ingests all four source types: forum posts, PDF manuals (`raw_data/manuals/` — 15 PDFs), YouTube transcripts (`raw_data/youtube_ids.txt` — 15 IDs), and web articles (`raw_data/article_urls.txt` — 9 URLs); chunk count grows from 21 to ≥200
+  1. `python -m app.ingest.pipeline` with no flags ingests all four source types: forum posts, PDF manuals (`raw_data/manuals/` — 15 PDFs), YouTube transcripts (`raw_data/youtube_ids.txt` — 13 IDs), and web articles (`raw_data/article_urls.txt` — 10 URLs); chunk count grows from 21 to ≥200
   2. PDF chunker never splits inside a table; `pymupdf4llm` is used as an escalation path for table-heavy pages (CLAUDE.md hard constraint)
   3. YouTube loader uses `youtube-transcript-api` with `yt-dlp` as fallback; transcripts are chunked into 300–500-token windows
   4. Article scraper uses `trafilatura`; boilerplate (nav, ads, footers) is stripped before chunking
   5. Re-running the pipeline on unchanged input embeds zero new chunks (content-hash dedup still holds across all source types)
   6. After full ingest, `python -m app.eval.retrieval` shows recall@8 ≥ 1.0 and MRR ≥ 0.9 on the held-out set; `python -m app.eval.ragas` shows mean faithfulness ≥ 0.5
-**Plans:** Not planned yet
+**Plans:** 5 plans across 4 waves
+
+**Wave 1** (unblock: fix writer bug + extend RawDocument)
+- [ ] 06-01-PLAN.md — Fix `upsert_chunks()` source_type hardcode: remove `_PHASE_1_SOURCE_TYPE = "forum"`, add `source_type: str` parameter, update pipeline.py call site + test_writer.py; add `metadata: dict` field to RawDocument [W1; INGEST-08, INGEST-09, INGEST-10]
+
+**Wave 2** (parallel: PDF and YouTube loaders/chunkers, both depend only on Wave 1)
+- [ ] 06-02-PLAN.md — `load_pdf_manuals()` (pymupdf4llm primary / pypdf fallback) + `chunk_pdf()` (heading-aware section splits, table-atomic rule, ToC skip heuristic, page_number + section_heading metadata); updated dispatch in `chunk_document()` [W2; INGEST-08]
+- [ ] 06-03-PLAN.md — `load_youtube_transcripts()` (YouTubeTranscriptApi().fetch() instance API, yt-dlp subprocess fallback, source_type="youtube") + `chunk_youtube()` (greedy 300-500 token windows, start_time from first snippet per D-10, video_id in metadata) [W2; INGEST-10]
+
+**Wave 3** (article loader/chunker, depends on Wave 1; could parallel Wave 2 but uses same files)
+- [ ] 06-04-PLAN.md — `load_web_articles()` (trafilatura fetch_url + extract, 100-word skip threshold per D-07) + `chunk_article()` (same greedy paragraph-packing as forum, source_filename=URL) [W3; INGEST-09]
+
+**Wave 4** (pipeline orchestration + eval gate, depends on all prior waves)
+- [ ] 06-05-PLAN.md — Extend `pipeline.py::main()` to call all 4 loaders; add --manuals-dir, --youtube-ids, --article-urls CLI args; end-of-run summaries per D-07; update requirements.txt; human checkpoint: full pipeline run + eval score verification [W4; INGEST-08, INGEST-09, INGEST-10, EVAL-05]
 
 ### Phase 7: Persistent Corpus & Cloud Deployment
 **Goal:** (1) Confirm the corpus persists across Docker restarts without re-ingestion — `docker-compose.yml` already has a `pgdata` named volume; the key constraint is that `docker-compose down -v` destroys it and must never be used in normal operation (document this clearly). (2) Deploy the full app to AWS using available free credits so others can access it at a public HTTPS URL — containerised FastAPI + Next.js, Postgres + pgvector on AWS (RDS or EC2-hosted Docker), API keys managed via AWS Secrets Manager or EC2 environment, corpus pre-seeded so no manual pipeline run is needed after deploy.
@@ -150,7 +163,7 @@ Cross-cutting constraints:
 | 3. Grounded Generation & Minimal Chat UI | 4/4 | Complete    | 2026-05-20 |
 | 4. UI Polish — Knobs, Markdown, Follow-ups | 4/4 | Complete    | 2026-05-22 |
 | 5. Evaluation Harness & Grounding Quality | 3/3 | Complete    | 2026-05-28 |
-| 6. Full Corpus Ingestion | 0/? | Not planned | — |
+| 6. Full Corpus Ingestion | 0/5 | Planned | — |
 | 7. Persistent Corpus & Cloud Deployment | 0/? | Not planned | — |
 
 ---
@@ -162,3 +175,4 @@ Cross-cutting constraints:
 *Revision 2026-05-28: Phase 5 planned — 3 plans across 3 sequential waves. W1: 05-01 (retrieval recall scorer + runs.jsonl); W2: 05-02 (refusal smoke tests); W3: 05-03 (custom RAGAS faithfulness CLI). All 3 requirements covered: EVAL-02, EVAL-03, EVAL-04. Each plan leads with a Wave 0 failing-test stub task (RED) before implementation.*
 *Revision 2026-05-21: Phase 4 planned — 4 plans across 3 waves. W1: 04-01 (react-markdown); W2: 04-02 (rotary knobs) + 04-03 (loading state + copy button) in parallel; W3: 04-04 (follow-up rail). All 6 requirements covered: CHAT-04, UI-01 through UI-05.*
 *Revision 2026-05-29: Phase 6 added — Full Corpus Ingestion (PDF manuals, YouTube transcripts, web articles; eval score improvement gate). Phase 7 added — Persistent Corpus & Cloud Deployment (Docker volume persistence documentation + AWS EC2 deployment with pre-seeded corpus at public HTTPS URL).*
+*Revision 2026-05-29: Phase 6 planned — 5 plans across 4 waves. W1: 06-01 (writer bug fix + RawDocument metadata field); W2: 06-02 (PDF loader + chunker) + 06-03 (YouTube loader + chunker) in parallel; W3: 06-04 (article loader + chunker); W4: 06-05 (pipeline orchestration + requirements.txt + human eval checkpoint). All 4 requirements covered: INGEST-08, INGEST-09, INGEST-10, EVAL-05.*
