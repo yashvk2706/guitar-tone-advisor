@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Planning
-stopped_at: "Phase 5 fully verified (2026-05-29) — all 3 UAT items cleared; Phase 6 + Phase 7 added to roadmap"
+status: Ready to execute
+stopped_at: "Phase 6 planned (2026-05-29) — 5 plans across 4 waves; INGEST-08/09/10 + EVAL-05 covered; ready to execute"
 last_updated: "2026-05-29T00:00:00.000Z"
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 19
+  total_plans: 24
   completed_plans: 19
   percent: 71
 ---
