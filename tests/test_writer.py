@@ -507,3 +507,82 @@ def test_no_fstring_sql_in_writer():
             )
     except FileNotFoundError:  # pragma: no cover — no grep on PATH
         pass
+
+
+# ---------------------------------------------------------------------------
+# Test 13: _PHASE_1_SOURCE_TYPE constant is gone. Runs without a DB.
+# ---------------------------------------------------------------------------
+
+
+def test_upsert_chunks_source_type_not_hardcoded():
+    """Verify that the _PHASE_1_SOURCE_TYPE hardcode has been removed from writer.py.
+
+    This is a static scan — no Postgres required. The test asserts that the
+    string ``_PHASE_1_SOURCE_TYPE`` does not appear anywhere in the file,
+    confirming the Phase 6 writer fix is in place.
+    """
+
+    writer_path = (
+        Path(__file__).resolve().parent.parent / "app" / "ingest" / "writer.py"
+    )
+    assert writer_path.exists(), f"writer.py missing at {writer_path}"
+    contents = writer_path.read_text(encoding="utf-8")
+
+    assert "_PHASE_1_SOURCE_TYPE" not in contents, (
+        "writer.py still contains _PHASE_1_SOURCE_TYPE — the Phase 6 writer "
+        "fix has not been applied. upsert_chunks() must accept source_type as "
+        "a required parameter and use it directly instead of the hardcoded constant."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Test 14: upsert_chunks stores the correct source_type (DB-gated).
+# ---------------------------------------------------------------------------
+
+
+def test_upsert_chunks_uses_source_type(db_conn):
+    """Verify that upsert_chunks writes the caller-supplied source_type to the DB.
+
+    Inserts a chunk with source_type="pdf_manual" and reads it back from the
+    chunks table. The stored value must equal "pdf_manual", not "forum".
+
+    This is the key regression test for the Phase 6 writer bug fix.
+    """
+
+    from app.ingest.writer import upsert_chunks, upsert_document
+
+    # Create a document with source_type="pdf_manual".
+    raw = RawDocument(
+        source_type="pdf_manual",
+        source_id="fender_twin_reverb.pdf",
+        title="Fender Twin Reverb",
+        text="Fender Twin Reverb manual content.",
+        content_hash="p" * 64,
+    )
+    doc_id = upsert_document(db_conn, raw)
+
+    # Write a chunk with source_type="pdf_manual".
+    upsert_chunks(
+        db_conn,
+        doc_id,
+        [_make_chunk(0)],
+        [_fake_vector()],
+        "text-embedding-3-small",
+        source_type="pdf_manual",
+    )
+    db_conn.commit()
+
+    # Read back the stored source_type.
+    with db_conn.cursor() as cur:
+        cur.execute(
+            "SELECT source_type FROM chunks WHERE document_id = %s AND chunk_index = 0",
+            (doc_id,),
+        )
+        row = cur.fetchone()
+
+    assert row is not None, "No chunk row found after upsert_chunks"
+    assert row[0] == "pdf_manual", (
+        f"Expected source_type='pdf_manual', got {row[0]!r}. "
+        "upsert_chunks() is still using a hardcoded source_type instead of "
+        "the caller-supplied value."
+    )
