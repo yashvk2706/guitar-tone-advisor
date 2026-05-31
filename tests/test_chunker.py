@@ -77,16 +77,17 @@ def _paragraph_of_tokens(target_tokens: int, marker: str = "alpha") -> str:
 
 
 def test_dispatch_raises_for_unknown_source_type() -> None:
+    # NOTE: "pdf_manual" is now implemented (Phase 6). Use a truly unknown type.
     bad = RawDocument(
-        source_type="pdf_manual",
-        source_id="marshall_jcm800.pdf",
+        source_type="totally_unknown_type",
+        source_id="unknown.xyz",
         title=None,
         text="anything",
         content_hash="x",
     )
     with pytest.raises(NotImplementedError) as exc:
         chunk_document(bad)
-    assert "pdf_manual" in str(exc.value)
+    assert "totally_unknown_type" in str(exc.value)
 
 
 def test_short_document_yields_one_chunk() -> None:
