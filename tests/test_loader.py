@@ -115,3 +115,56 @@ def test_rawdocument_is_frozen() -> None:
     with pytest.raises(Exception):
         # frozen dataclass disallows attribute assignment
         docs[0].text = "mutated"  # type: ignore[misc]
+
+
+# ---------------------------------------------------------------------------
+# PDF manual loader tests (Phase 6 Plan 02).
+# ---------------------------------------------------------------------------
+
+import os  # noqa: E402 — needed for os.path.isabs in assertions
+
+from app.ingest.loader import load_pdf_manuals  # noqa: E402
+
+MANUALS_DIR = Path(__file__).resolve().parent.parent / "raw_data" / "manuals"
+
+
+def test_load_pdf_manuals_source_type() -> None:
+    docs = load_pdf_manuals(MANUALS_DIR)
+    assert all(d.source_type == "pdf_manual" for d in docs), (
+        "All PDF manuals must have source_type='pdf_manual'"
+    )
+
+
+def test_load_pdf_manuals_source_id_is_absolute_path() -> None:
+    docs = load_pdf_manuals(MANUALS_DIR)
+    for doc in docs:
+        assert os.path.isabs(doc.source_id), (
+            f"source_id must be an absolute path, got: {doc.source_id!r}"
+        )
+        assert doc.source_id.endswith(".pdf"), (
+            f"source_id must end with '.pdf', got: {doc.source_id!r}"
+        )
+
+
+def test_load_pdf_manuals_count() -> None:
+    docs = load_pdf_manuals(MANUALS_DIR)
+    assert len(docs) == 15, f"Expected 15 PDF manuals, got {len(docs)}"
+
+
+def test_load_pdf_manuals_content_hash_is_hex64() -> None:
+    docs = load_pdf_manuals(MANUALS_DIR)
+    for doc in docs:
+        assert len(doc.content_hash) == 64, (
+            f"content_hash must be 64 chars, got {len(doc.content_hash)} for {doc.source_id!r}"
+        )
+        assert all(c in "0123456789abcdef" for c in doc.content_hash), (
+            f"content_hash must be lowercase hex, got: {doc.content_hash!r}"
+        )
+
+
+def test_load_pdf_manuals_sorted_order() -> None:
+    first = load_pdf_manuals(MANUALS_DIR)
+    second = load_pdf_manuals(MANUALS_DIR)
+    assert [d.source_id for d in first] == [d.source_id for d in second], (
+        "load_pdf_manuals must return documents in deterministic sorted order"
+    )
