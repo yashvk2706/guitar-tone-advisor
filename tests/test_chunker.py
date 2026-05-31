@@ -233,3 +233,148 @@ def test_chunk_forum_directly_matches_dispatch() -> None:
 def test_constants_are_correct_values() -> None:
     assert MAX_TOKENS == 500
     assert MIN_PARAGRAPH_WORDS == 40
+
+
+# ---------------------------------------------------------------------------
+# PDF chunker tests (Phase 6 Plan 02).
+# ---------------------------------------------------------------------------
+
+from unittest.mock import patch  # noqa: E402
+
+from app.ingest.chunker import chunk_pdf  # noqa: E402
+
+
+def _make_pdf_doc(
+    source_id: str = "/fake/path/manual.pdf",
+    text: str = "Some text",
+) -> RawDocument:
+    """Build a synthetic pdf_manual RawDocument inline."""
+    return RawDocument(
+        source_type="pdf_manual",
+        source_id=source_id,
+        title="manual",
+        text=text,
+        content_hash="dummy-hash",
+    )
+
+
+def _page_dict(page_num: int, text: str) -> dict:
+    """Build a minimal pymupdf4llm page dict."""
+    return {
+        "metadata": {"page": page_num},
+        "text": text,
+    }
+
+
+def test_pdf_chunker_dispatch() -> None:
+    """chunk_document() routes 'pdf_manual' to chunk_pdf() without raising NotImplementedError."""
+    page_text = "## Controls\n\nThe gain knob controls the amount of distortion in the signal chain.\n"
+    page_text += " ".join(["word"] * 50) + ".\n"
+    pages = [_page_dict(1, page_text)]
+
+    with patch("pymupdf4llm.to_markdown", return_value=pages):
+        doc = _make_pdf_doc()
+        # Must not raise NotImplementedError
+        chunks = chunk_document(doc)
+    assert isinstance(chunks, list)
+
+
+def test_pdf_chunker_no_table_split() -> None:
+    """Tables (GFM | lines) are never split across chunk boundaries."""
+    # Build a large table that would force a split in a naive chunker.
+    header = "| Column A | Column B | Column C |\n|---|---|---|\n"
+    rows = "".join(f"| Data {i} | Data {i} | Data {i} |\n" for i in range(30))
+    table_block = header + rows
+
+    # Pad with text before and after to force greedy packing
+    pre_text = " ".join(["word"] * 400)
+    post_text = " ".join(["word"] * 200)
+    page_text = pre_text + "\n\n" + table_block + "\n\n" + post_text
+
+    pages = [_page_dict(1, page_text)]
+
+    with patch("pymupdf4llm.to_markdown", return_value=pages):
+        doc = _make_pdf_doc()
+        chunks = chunk_pdf(doc)
+
+    # Verify no chunk contains a partial table (starts with | but the table header
+    # is in a different chunk). We check that any chunk containing | lines also
+    # contains the header row pattern.
+    table_lines_found = False
+    for chunk in chunks:
+        lines = chunk.text.splitlines()
+        has_pipe_lines = any(line.lstrip().startswith("|") for line in lines)
+        if has_pipe_lines:
+            table_lines_found = True
+            # Check that the first | line in this chunk is the header (not a data row
+            # orphaned from its header). The table is atomic: if any | line is present,
+            # the header "Column A" must be present too.
+            assert "Column A" in chunk.text, (
+                f"Table split detected: chunk contains | lines but no header:\n{chunk.text[:300]}"
+            )
+    assert table_lines_found, "Expected table lines in at least one chunk"
+
+
+def test_pdf_chunker_skips_cover() -> None:
+    """Cover page (page index 0, page_num=1) is skipped; no cover text in any chunk."""
+    cover_text = "User Manual Cover Page\nModel Number XYZ-9000\n"
+    body_text = "## Introduction\n\n" + " ".join(["word"] * 100) + ".\n"
+
+    # pymupdf4llm page_chunks with pages= skipping index 0 returns page 2+ only.
+    # Our implementation calls to_markdown with pages=range(1, n_pages), so page 1
+    # (cover, page_num=1, index=0) is excluded. We simulate that here:
+    body_pages = [_page_dict(2, body_text)]
+
+    with patch("pymupdf4llm.to_markdown") as mock_to_markdown:
+        # First call (without pages= filter) returns all pages to get count;
+        # second call (with pages= filter) returns body only.
+        mock_to_markdown.side_effect = [
+            [_page_dict(1, cover_text), _page_dict(2, body_text)],
+            body_pages,
+        ]
+        doc = _make_pdf_doc()
+        chunks = chunk_pdf(doc)
+
+    for chunk in chunks:
+        assert "User Manual Cover Page" not in chunk.text, (
+            f"Cover page text found in chunk: {chunk.text[:200]}"
+        )
+
+
+def test_pdf_chunk_metadata() -> None:
+    """Every chunk produced by chunk_pdf() has 'section_heading' and 'page_number' keys."""
+    page_text = "## Specifications\n\n" + " ".join(["word"] * 60) + ".\n"
+    pages = [_page_dict(2, page_text)]
+
+    with patch("pymupdf4llm.to_markdown", return_value=pages):
+        doc = _make_pdf_doc()
+        chunks = chunk_pdf(doc)
+
+    assert len(chunks) > 0, "Expected at least one chunk"
+    for chunk in chunks:
+        assert "section_heading" in chunk.metadata, (
+            f"Missing 'section_heading' in chunk metadata: {chunk.metadata}"
+        )
+        assert "page_number" in chunk.metadata, (
+            f"Missing 'page_number' in chunk metadata: {chunk.metadata}"
+        )
+        assert isinstance(chunk.metadata["section_heading"], str)
+        assert isinstance(chunk.metadata["page_number"], int)
+
+
+def test_pdf_chunks_within_token_budget() -> None:
+    """All chunks produced by chunk_pdf() have token_count <= MAX_TOKENS."""
+    # Build a multi-page document with many paragraphs
+    paragraphs = [" ".join(["word"] * 200) for _ in range(5)]
+    page_text = "\n\n".join(paragraphs)
+    pages = [_page_dict(2, page_text), _page_dict(3, page_text)]
+
+    with patch("pymupdf4llm.to_markdown", return_value=pages):
+        doc = _make_pdf_doc()
+        chunks = chunk_pdf(doc)
+
+    assert len(chunks) > 0
+    for chunk in chunks:
+        assert chunk.token_count <= MAX_TOKENS, (
+            f"Chunk exceeds MAX_TOKENS ({MAX_TOKENS}): token_count={chunk.token_count}"
+        )
