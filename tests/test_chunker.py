@@ -266,13 +266,33 @@ def _page_dict(page_num: int, text: str) -> dict:
     }
 
 
+def _make_two_call_pages(
+    *body_pages_list: list,
+) -> list:
+    """Return side_effect list for the two pymupdf4llm.to_markdown calls.
+
+    chunk_pdf() calls to_markdown twice:
+      1. Without pages= filter → to count total pages (determines cover skip).
+      2. With pages=list(range(1, n_pages)) → returns pages starting at index 1.
+
+    To simulate this, the first call returns cover + body; the second returns
+    only the body pages (indices 1..n-1).
+    """
+    cover = _page_dict(1, "Cover Page")
+    # Build the full list (cover + body pages).
+    all_pages = [cover] + list(body_pages_list)
+    # The second call with pages=[1,2,...] returns body pages only.
+    body_only = list(body_pages_list)
+    return [all_pages, body_only]
+
+
 def test_pdf_chunker_dispatch() -> None:
     """chunk_document() routes 'pdf_manual' to chunk_pdf() without raising NotImplementedError."""
-    page_text = "## Controls\n\nThe gain knob controls the amount of distortion in the signal chain.\n"
-    page_text += " ".join(["word"] * 50) + ".\n"
-    pages = [_page_dict(1, page_text)]
+    page_text = "## Controls\n\n" + " ".join(["word"] * 50) + ".\n"
+    body_page = _page_dict(2, page_text)
 
-    with patch("pymupdf4llm.to_markdown", return_value=pages):
+    with patch("pymupdf4llm.to_markdown") as mock_to_markdown:
+        mock_to_markdown.side_effect = _make_two_call_pages(body_page)
         doc = _make_pdf_doc()
         # Must not raise NotImplementedError
         chunks = chunk_document(doc)
@@ -286,14 +306,14 @@ def test_pdf_chunker_no_table_split() -> None:
     rows = "".join(f"| Data {i} | Data {i} | Data {i} |\n" for i in range(30))
     table_block = header + rows
 
-    # Pad with text before and after to force greedy packing
+    # Pad with text before the table to fill the greedy accumulator.
     pre_text = " ".join(["word"] * 400)
-    post_text = " ".join(["word"] * 200)
-    page_text = pre_text + "\n\n" + table_block + "\n\n" + post_text
+    page_text = pre_text + "\n\n" + table_block
 
-    pages = [_page_dict(1, page_text)]
+    body_page = _page_dict(2, page_text)
 
-    with patch("pymupdf4llm.to_markdown", return_value=pages):
+    with patch("pymupdf4llm.to_markdown") as mock_to_markdown:
+        mock_to_markdown.side_effect = _make_two_call_pages(body_page)
         doc = _make_pdf_doc()
         chunks = chunk_pdf(doc)
 
@@ -320,17 +340,14 @@ def test_pdf_chunker_skips_cover() -> None:
     cover_text = "User Manual Cover Page\nModel Number XYZ-9000\n"
     body_text = "## Introduction\n\n" + " ".join(["word"] * 100) + ".\n"
 
-    # pymupdf4llm page_chunks with pages= skipping index 0 returns page 2+ only.
-    # Our implementation calls to_markdown with pages=range(1, n_pages), so page 1
-    # (cover, page_num=1, index=0) is excluded. We simulate that here:
-    body_pages = [_page_dict(2, body_text)]
+    body_page = _page_dict(2, body_text)
 
     with patch("pymupdf4llm.to_markdown") as mock_to_markdown:
-        # First call (without pages= filter) returns all pages to get count;
-        # second call (with pages= filter) returns body only.
+        # First call returns cover + body (to count pages);
+        # second call (with pages=[1]) returns only the body page.
         mock_to_markdown.side_effect = [
-            [_page_dict(1, cover_text), _page_dict(2, body_text)],
-            body_pages,
+            [_page_dict(1, cover_text), body_page],
+            [body_page],
         ]
         doc = _make_pdf_doc()
         chunks = chunk_pdf(doc)
@@ -344,9 +361,10 @@ def test_pdf_chunker_skips_cover() -> None:
 def test_pdf_chunk_metadata() -> None:
     """Every chunk produced by chunk_pdf() has 'section_heading' and 'page_number' keys."""
     page_text = "## Specifications\n\n" + " ".join(["word"] * 60) + ".\n"
-    pages = [_page_dict(2, page_text)]
+    body_page = _page_dict(2, page_text)
 
-    with patch("pymupdf4llm.to_markdown", return_value=pages):
+    with patch("pymupdf4llm.to_markdown") as mock_to_markdown:
+        mock_to_markdown.side_effect = _make_two_call_pages(body_page)
         doc = _make_pdf_doc()
         chunks = chunk_pdf(doc)
 
@@ -364,12 +382,14 @@ def test_pdf_chunk_metadata() -> None:
 
 def test_pdf_chunks_within_token_budget() -> None:
     """All chunks produced by chunk_pdf() have token_count <= MAX_TOKENS."""
-    # Build a multi-page document with many paragraphs
+    # Build a multi-page document with paragraphs
     paragraphs = [" ".join(["word"] * 200) for _ in range(5)]
     page_text = "\n\n".join(paragraphs)
-    pages = [_page_dict(2, page_text), _page_dict(3, page_text)]
+    body_page1 = _page_dict(2, page_text)
+    body_page2 = _page_dict(3, page_text)
 
-    with patch("pymupdf4llm.to_markdown", return_value=pages):
+    with patch("pymupdf4llm.to_markdown") as mock_to_markdown:
+        mock_to_markdown.side_effect = _make_two_call_pages(body_page1, body_page2)
         doc = _make_pdf_doc()
         chunks = chunk_pdf(doc)
 

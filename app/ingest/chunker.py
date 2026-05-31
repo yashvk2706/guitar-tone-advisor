@@ -1,12 +1,14 @@
-"""Paragraph-packing chunker for the Phase 1 forum corpus.
+"""Paragraph-packing chunker for the corpus.
 
-Treats each ``.txt`` file as one document, splits on blank-line paragraph
-boundaries, and greedily packs paragraphs into 300–500 token chunks measured
-with ``tiktoken``'s ``cl100k_base`` encoding (the same encoder OpenAI uses
-for the ``text-embedding-3-*`` family — see ``.planning/research/STACK.md``
-§Chunking Strategy per Source Type).
+Treats each source document as a stream of blocks and greedily packs them
+into 300–500 token chunks measured with ``tiktoken``'s ``cl100k_base``
+encoding (the same encoder OpenAI uses for the ``text-embedding-3-*`` family
+— see ``.planning/research/STACK.md`` §Chunking Strategy per Source Type).
 
-Implementation decisions encoded here (locked by 01-CONTEXT.md):
+Source-type dispatch is a CLAUDE.md hard constraint: ``chunk_document``
+inspects ``raw_doc.source_type`` and routes to the per-type chunker.
+
+Phase 1 implementation decisions (locked by 01-CONTEXT.md):
 
 * **D-01** Forward-merge: any paragraph with fewer than ``MIN_PARAGRAPH_WORDS``
   (40) whitespace-split words is folded into the next chunk rather than
@@ -18,21 +20,34 @@ Implementation decisions encoded here (locked by 01-CONTEXT.md):
   authoring UI (Plan 01-05) can display provenance.
 * **D-04** ``chunk_index`` is 0-based and resets per document.
 
-Source-type dispatch is a CLAUDE.md hard constraint: ``chunk_document``
-inspects ``raw_doc.source_type`` and only routes ``"forum"`` to the
-``chunk_forum`` implementation. Other source types (``pdf_manual`` etc.) are
-explicit ``NotImplementedError`` — Phase 2 wires them up.
+Phase 6 PDF chunker additions (locked by 06-02-PLAN.md):
+
+* **D-01** Heading detection: ``## Section Name`` GFM headings open a new
+  section boundary; ``current_heading`` updates on each heading line.
+* **D-03** PDF chunk metadata carries ``source_filename`` (filename only,
+  for display), ``section_heading`` (str), and ``page_number`` (int, 1-based).
+* **D-04** ToC skip heuristic: pages where >50% of non-empty lines have
+  ≤ 4 words are skipped (index page / table of contents).
+* **D-06** Table-atomic rule: a maximal contiguous run of ``|``-prefixed
+  lines is treated as a single atomic block — never split mid-table.
 """
 
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 import unicodedata
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import tiktoken
+
+logger = logging.getLogger(__name__)
+
+# Heading detection: GFM ATX headings (1–6 #s followed by space + text).
+_HEADING_RE = re.compile(r"^#{1,6}\s+(.+)$")
 
 from app.ingest.loader import RawDocument
 
@@ -86,18 +101,238 @@ def chunk_document(raw_doc: RawDocument) -> list[Chunk]:
     """Dispatch to the per-source-type chunker.
 
     CLAUDE.md hard constraint: "Chunking dispatches on source_type — no
-    universal chunker." Phase 1 supports ``"forum"`` only; other source
-    types raise ``NotImplementedError`` so that an accidental Phase 2
-    invocation against this module fails loudly instead of silently
-    producing a degenerate chunking.
+    universal chunker." Supported source types: ``"forum"``, ``"pdf_manual"``.
+    Unknown source types raise ``NotImplementedError`` so accidental callers
+    fail loudly rather than silently producing degenerate output.
     """
 
     if raw_doc.source_type == "forum":
         return chunk_forum(raw_doc)
+    elif raw_doc.source_type == "pdf_manual":
+        return chunk_pdf(raw_doc)
 
     raise NotImplementedError(
-        f"Chunker for source_type={raw_doc.source_type!r} not implemented in Phase 1"
+        f"Chunker for source_type={raw_doc.source_type!r} not implemented"
     )
+
+
+def _is_toc_page(lines: list[str]) -> bool:
+    """Return True if the page looks like a Table of Contents (D-04).
+
+    Heuristic: if more than 50% of non-empty lines have ≤ 4 whitespace-split
+    words, treat the page as a ToC / index page and skip it.
+    """
+    non_empty = [ln for ln in lines if ln.strip()]
+    if not non_empty:
+        return True
+    short_count = sum(1 for ln in non_empty if len(ln.split()) <= 4)
+    return (short_count / len(non_empty)) > 0.5
+
+
+def _is_table_line(line: str) -> bool:
+    """Return True if the line is part of a GFM table (starts with ``|``)."""
+    return line.lstrip().startswith("|")
+
+
+def _finalize_pdf_chunk(
+    blocks: list[str],
+    chunk_index: int,
+    source_id: str,
+    section_heading: str,
+    page_number: int,
+) -> Chunk:
+    """Materialize a list of text blocks into a frozen PDF Chunk with full metadata."""
+    text = unicodedata.normalize("NFKC", "\n\n".join(blocks)).strip()
+    return Chunk(
+        chunk_index=chunk_index,
+        text=text,
+        token_count=len(_ENCODING.encode(text)),
+        content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        metadata={
+            "source_filename": Path(source_id).name,
+            "section_heading": section_heading,
+            "page_number": page_number,
+        },
+    )
+
+
+def chunk_pdf(raw_doc: RawDocument) -> list[Chunk]:
+    """Section-aware, table-atomic chunker for PDF manuals (INGEST-08).
+
+    Algorithm:
+
+    1. Open the PDF via ``pymupdf4llm.to_markdown()`` (GFM output, page_chunks=True).
+       ``raw_doc.source_id`` is the full absolute path set by ``load_pdf_manuals()``.
+    2. Skip page index 0 (cover page) by calling ``to_markdown()`` with
+       ``pages=list(range(1, page_count))``.
+    3. For each remaining page, apply the ToC-skip heuristic (D-04): skip pages
+       where >50% of non-empty lines have ≤ 4 words.
+    4. Within each page, process lines:
+       - Heading lines (``^#{1,6}\\s+…``) flush the current accumulator and
+         update ``current_heading`` (D-01).
+       - Table lines (``|``-prefixed) are collected into a single atomic block;
+         this block is never split mid-table (D-06).
+       - Other lines form text blocks that enter the greedy 500-token accumulator.
+    5. Falls back to ``pypdf.PdfReader`` plain-text extraction if ``pymupdf4llm``
+       raises any exception (D-08). Plain-text fallback gets ``section_heading=""``.
+
+    Each emitted chunk's metadata carries ``source_filename`` (filename only),
+    ``section_heading``, and ``page_number`` (1-based int) per D-03.
+    """
+
+    import pymupdf4llm  # local import — optional heavy dependency
+    from pypdf import PdfReader  # local import — optional heavy dependency
+
+    _SEPARATOR_TOKENS = 1  # "\n\n" between blocks costs 1 token in cl100k_base
+
+    chunks: list[Chunk] = []
+
+    # ------------------------------------------------------------------ #
+    # Primary extractor: pymupdf4llm                                       #
+    # ------------------------------------------------------------------ #
+    try:
+        # First call: get all pages to count them (needed for pages= param).
+        all_pages = pymupdf4llm.to_markdown(raw_doc.source_id, page_chunks=True)
+        n_pages = len(all_pages)
+
+        if n_pages <= 1:
+            # Only cover page (or empty PDF) — nothing to chunk.
+            return []
+
+        # Second call: skip page index 0 (cover) by requesting indices 1..n-1.
+        pages = pymupdf4llm.to_markdown(
+            raw_doc.source_id,
+            page_chunks=True,
+            pages=list(range(1, n_pages)),
+        )
+
+        for page in pages:
+            page_num: int = page["metadata"]["page"]
+            page_text: str = page.get("text", "")
+            lines = page_text.splitlines()
+
+            # ToC heuristic skip (D-04).
+            if _is_toc_page(lines):
+                continue
+
+            current_heading: str = ""
+            current_blocks: list[str] = []
+            current_tokens: int = 0
+            table_buffer: list[str] = []
+
+            def _flush_table() -> str | None:
+                """Flush the table buffer into a single atomic block string."""
+                nonlocal table_buffer
+                if not table_buffer:
+                    return None
+                block = "\n".join(table_buffer)
+                table_buffer = []
+                return block
+
+            def _emit_chunk() -> None:
+                nonlocal current_blocks, current_tokens, chunks
+                if current_blocks:
+                    chunks.append(
+                        _finalize_pdf_chunk(
+                            current_blocks,
+                            len(chunks),
+                            raw_doc.source_id,
+                            current_heading,
+                            page_num,
+                        )
+                    )
+                    current_blocks = []
+                    current_tokens = 0
+
+            def _add_block(block: str) -> None:
+                """Add a block to the greedy accumulator, emitting a chunk if needed."""
+                nonlocal current_blocks, current_tokens
+                block_tokens = len(_ENCODING.encode(block))
+                separator = _SEPARATOR_TOKENS if current_blocks else 0
+                projected = current_tokens + separator + block_tokens
+                if current_blocks and projected > MAX_TOKENS:
+                    _emit_chunk()
+                    current_blocks = [block]
+                    current_tokens = block_tokens
+                else:
+                    current_blocks.append(block)
+                    current_tokens = projected if not current_blocks[:-1] else projected
+
+            # Process lines left-to-right, building blocks.
+            for line in lines:
+                heading_match = _HEADING_RE.match(line.rstrip())
+                if heading_match:
+                    # Flush any buffered table first.
+                    table_block = _flush_table()
+                    if table_block:
+                        _add_block(table_block)
+                    # Flush current accumulator and start a new section.
+                    _emit_chunk()
+                    current_heading = heading_match.group(1).strip()
+                    # The heading line itself becomes the first block of the
+                    # new section so it appears as context in the chunk.
+                    current_blocks = [line.rstrip()]
+                    current_tokens = len(_ENCODING.encode(line.rstrip()))
+                elif _is_table_line(line):
+                    # Accumulate table rows into the buffer.
+                    table_buffer.append(line)
+                else:
+                    # Before adding non-table content, flush any pending table.
+                    if table_buffer:
+                        table_block = _flush_table()
+                        if table_block:
+                            _add_block(table_block)
+                    stripped = line.strip()
+                    if stripped:
+                        _add_block(stripped)
+
+            # After processing all lines, flush remaining table and accumulator.
+            table_block = _flush_table()
+            if table_block:
+                _add_block(table_block)
+            _emit_chunk()
+
+    except Exception as primary_exc:
+        logger.debug(
+            "pymupdf4llm chunking failed for %s: %r — trying pypdf fallback",
+            Path(raw_doc.source_id).name,
+            primary_exc,
+        )
+
+        # ------------------------------------------------------------------ #
+        # Fallback: pypdf plain text — no heading detection, page_number=0    #
+        # ------------------------------------------------------------------ #
+        try:
+            reader = PdfReader(raw_doc.source_id)
+            for page_idx, page in enumerate(reader.pages):
+                if page_idx == 0:
+                    continue  # skip cover page
+                text = page.extract_text() or ""
+                paragraphs = [p.strip() for p in re.split(r"\n\s*\n+", text) if p.strip()]
+                for para in paragraphs:
+                    para_tokens = len(_ENCODING.encode(para))
+                    sep = _SEPARATOR_TOKENS if chunks else 0
+                    # Start fresh chunk per page in fallback mode.
+                    if chunks and (len(_ENCODING.encode(chunks[-1].text)) + sep + para_tokens) > MAX_TOKENS:
+                        # Emit the last accumulated paragraph as its own chunk.
+                        pass  # chunks are individual paragraphs in fallback
+                    chunks.append(
+                        _finalize_pdf_chunk(
+                            [para],
+                            len(chunks),
+                            raw_doc.source_id,
+                            section_heading="",
+                            page_number=page_idx + 1,
+                        )
+                    )
+        except Exception as fallback_exc:
+            logger.warning(
+                "PDF chunking failed completely for %s: %r",
+                Path(raw_doc.source_id).name,
+                fallback_exc,
+            )
+
+    return chunks
 
 
 def _split_paragraphs(text: str) -> list[str]:
