@@ -14,10 +14,12 @@ threat model in 01-02-PLAN.md.
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -25,9 +27,9 @@ class RawDocument:
     """Immutable record of one raw corpus file before chunking.
 
     Attributes:
-        source_type: Source family. For Phase 1 this is always ``"forum"``;
-            Phase 2 introduces ``"pdf_manual"``, ``"web_article"``,
-            ``"youtube_transcript"``.
+        source_type: Source family — one of ``"forum"``, ``"pdf_manual"``,
+            ``"web_article"``, ``"youtube"``. The DB ``documents`` table has
+            a CHECK constraint that enforces this exact set.
         source_id: Filename (e.g. ``"bb_king_tone.txt"``). Stable identifier
             for ``UNIQUE(source_type, source_id)`` in ``documents`` (Plan
             01-04). Must include the ``.txt`` extension so that downstream
@@ -42,6 +44,11 @@ class RawDocument:
         content_hash: ``sha256(text.encode("utf-8")).hexdigest()``. The same
             input bytes always produce the same hash across runs (T-02-03
             mitigation — see Plan 04 idempotent dedup).
+        metadata: Optional per-document data for the chunker. Used by the
+            YouTube loader to thread snippet ``start`` times into the chunker
+            without re-fetching the transcript (e.g.
+            ``{"raw_segments": [{"text": ..., "start": 0.0}]}``). Forum,
+            PDF, and article loaders leave this as the default empty dict.
     """
 
     source_type: str
@@ -49,6 +56,7 @@ class RawDocument:
     title: str | None
     text: str
     content_hash: str
+    metadata: dict[str, Any] = dataclasses.field(default_factory=dict)
 
 
 def _normalize(raw: str) -> str:

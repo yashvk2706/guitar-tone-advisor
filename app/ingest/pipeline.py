@@ -126,6 +126,7 @@ def main(argv: list[str] | None = None) -> int:
                     to_embed,
                     result.vectors,
                     embedder.model,
+                    source_type=raw_doc.source_type,
                 )
                 total_inserted += len(to_embed)
             # Per-document commit: a mid-run crash leaves a valid prefix of

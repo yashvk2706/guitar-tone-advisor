@@ -136,18 +136,13 @@ def chunks_to_embed(
 # chunks upsert (vector-aware)
 # ---------------------------------------------------------------------------
 
-# Phase 1 ingests only the forum corpus, so chunks rows are written with the
-# literal ``'forum'`` source_type. Phase 2 will pass the source_type through
-# from the RawDocument when PDF/web/youtube chunkers come online.
-_PHASE_1_SOURCE_TYPE = "forum"
-
-
 def upsert_chunks(
     conn: psycopg.Connection,
     document_id: str,
     chunks: Sequence[Chunk],
     vectors: Sequence[Sequence[float]],
     embedding_model: str,
+    source_type: str,
 ) -> int:
     """Insert or update one row per chunk in the ``chunks`` table.
 
@@ -163,6 +158,18 @@ def upsert_chunks(
     a healthy run; the ``DO UPDATE`` exists so that a content_hash drift
     (e.g., chunker upgrade) cleanly overwrites the prior row rather than
     raising a unique-violation error.
+
+    Args:
+        conn: Live psycopg connection (autocommit off).
+        document_id: UUID string from ``upsert_document`` return value.
+        chunks: Ordered list of ``Chunk`` objects to insert/update.
+        vectors: Embedding vectors aligned by position to ``chunks``.
+        embedding_model: Model identifier stored on every row (e.g.
+            ``"text-embedding-3-small"``).
+        source_type: Source family for these chunks — one of
+            ``'forum'``, ``'pdf_manual'``, ``'web_article'``, ``'youtube'``.
+            Passed through from ``raw_doc.source_type`` so that chunks are
+            always tagged with their true origin, not a hardcoded constant.
 
     Returns the integer count of chunks processed (always ``len(chunks)``).
     """
@@ -192,7 +199,7 @@ def upsert_chunks(
         (
             str(uuid.uuid5(_CHUNK_NS, c.content_hash)),
             document_id,
-            _PHASE_1_SOURCE_TYPE,
+            source_type,
             c.chunk_index,
             c.text,
             c.content_hash,

@@ -59,22 +59,25 @@ def db_conn():
 
 
 @pytest.fixture(autouse=True)
-def _clean_tables(request, db_conn):
+def _clean_tables(request):
     """TRUNCATE chunks, documents, ingest_runs between tests so order is irrelevant.
 
-    Skips no-db tests (those that don't depend on db_conn). We attach
-    autouse=True but only run cleanup if the test requested the db_conn
-    fixture (i.e. needs the DB).
+    Only runs cleanup if the test requested the db_conn fixture (i.e. needs the
+    DB). Static / no-DB tests are left untouched. Using request.getfixturevalue
+    rather than a direct parameter so that the autouse fixture does NOT pull in
+    db_conn for tests that never requested it — which would cause db_conn's
+    skip-when-no-Postgres to cascade to static tests that have no DB dependency.
     """
 
     if "db_conn" not in request.fixturenames:
         yield
         return
 
+    conn = request.getfixturevalue("db_conn")
     # Pre-test clean: guarantee a known empty starting state.
-    with db_conn.cursor() as cur:
+    with conn.cursor() as cur:
         cur.execute("TRUNCATE chunks, documents, ingest_runs CASCADE")
-    db_conn.commit()
+    conn.commit()
     yield
 
 
@@ -233,7 +236,7 @@ def test_chunks_to_embed_unchanged_skips_all(db_conn):
     doc_id = upsert_document(db_conn, raw)
     chunks = [_make_chunk(0), _make_chunk(1)]
     vectors = [_fake_vector(), _fake_vector()]
-    upsert_chunks(db_conn, doc_id, chunks, vectors, "text-embedding-3-small")
+    upsert_chunks(db_conn, doc_id, chunks, vectors, "text-embedding-3-small", source_type="forum")
     db_conn.commit()
 
     to_embed, to_skip = chunks_to_embed(
@@ -256,7 +259,7 @@ def test_chunks_to_embed_changed_hash_re_embeds(db_conn):
     doc_id = upsert_document(db_conn, raw)
     chunks_v1 = [_make_chunk(0, content_hash="h" * 64), _make_chunk(1, content_hash="i" * 64)]
     vectors = [_fake_vector(), _fake_vector()]
-    upsert_chunks(db_conn, doc_id, chunks_v1, vectors, "text-embedding-3-small")
+    upsert_chunks(db_conn, doc_id, chunks_v1, vectors, "text-embedding-3-small", source_type="forum")
     db_conn.commit()
 
     # Only chunk 0's hash changed.
@@ -286,7 +289,7 @@ def test_upsert_chunks_inserts_with_vector(db_conn):
     doc_id = upsert_document(db_conn, raw)
     chunks = [_make_chunk(0)]
     vec = _fake_vector()
-    upsert_chunks(db_conn, doc_id, chunks, [vec], "text-embedding-3-small")
+    upsert_chunks(db_conn, doc_id, chunks, [vec], "text-embedding-3-small", source_type="forum")
     db_conn.commit()
 
     with db_conn.cursor() as cur:
@@ -320,9 +323,9 @@ def test_upsert_chunks_uses_on_conflict_update(db_conn):
     vec_v1 = _fake_vector()
     vec_v2 = [0.5] * 1536
 
-    upsert_chunks(db_conn, doc_id, [chunk_v1], [vec_v1], "text-embedding-3-small")
+    upsert_chunks(db_conn, doc_id, [chunk_v1], [vec_v1], "text-embedding-3-small", source_type="forum")
     db_conn.commit()
-    upsert_chunks(db_conn, doc_id, [chunk_v2], [vec_v2], "text-embedding-3-small")
+    upsert_chunks(db_conn, doc_id, [chunk_v2], [vec_v2], "text-embedding-3-small", source_type="forum")
     db_conn.commit()
 
     with db_conn.cursor() as cur:
@@ -426,6 +429,7 @@ def test_truncate_all(db_conn):
         [_make_chunk(0)],
         [_fake_vector()],
         "text-embedding-3-small",
+        source_type="forum",
     )
     db_conn.commit()
 
