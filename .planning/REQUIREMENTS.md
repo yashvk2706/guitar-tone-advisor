@@ -64,7 +64,7 @@
 ### Corpus Expansion (Phase 2)
 
 - **INGEST-08**: Ingestion pipeline processes PDF equipment manuals from `raw_data/manuals/` (15 PDFs: amps and pedals) with section-aware chunking that never splits inside a table
-- **INGEST-09**: Ingestion pipeline scrapes and extracts text from the 10 Premier Guitar article URLs in `raw_data/article_urls.txt` with rate-limiting and paywall detection
+- [x] **INGEST-09**: Ingestion pipeline scrapes and extracts text from the 10 Premier Guitar article URLs in `raw_data/article_urls.txt` with rate-limiting and paywall detection
 - **INGEST-10**: Ingestion pipeline fetches and processes transcripts for the 13 YouTube video IDs in `raw_data/youtube_ids.txt` with time-window chunking and auto-caption quality tagging
 - **RETR-04**: Retrieval weights source types differently (e.g., manual chunks up-weighted for technical spec queries; forum chunks up-weighted for tone-feel queries)
 

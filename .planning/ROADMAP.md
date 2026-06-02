@@ -126,7 +126,7 @@ Cross-cutting constraints:
   4. Article scraper uses `trafilatura`; boilerplate (nav, ads, footers) is stripped before chunking
   5. Re-running the pipeline on unchanged input embeds zero new chunks (content-hash dedup still holds across all source types)
   6. After full ingest, `python -m app.eval.retrieval` shows recall@8 ≥ 1.0 and MRR ≥ 0.9 on the held-out set; `python -m app.eval.ragas` shows mean faithfulness ≥ 0.5
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 **Wave 1** (unblock: fix writer bug + extend RawDocument)
 - [x] 06-01-PLAN.md — Fix `upsert_chunks()` source_type hardcode: remove `_PHASE_1_SOURCE_TYPE = "forum"`, add `source_type: str` parameter, update pipeline.py call site + test_writer.py; add `metadata: dict` field to RawDocument [W1; INGEST-08, INGEST-09, INGEST-10]
@@ -136,7 +136,7 @@ Cross-cutting constraints:
 - [x] 06-03-PLAN.md — `load_youtube_transcripts()` (YouTubeTranscriptApi().fetch() instance API, yt-dlp subprocess fallback, source_type="youtube") + `chunk_youtube()` (greedy 300-500 token windows, start_time from first snippet per D-10, video_id in metadata) [W2; INGEST-10]
 
 **Wave 3** (article loader/chunker, depends on Wave 1; could parallel Wave 2 but uses same files)
-- [ ] 06-04-PLAN.md — `load_web_articles()` (trafilatura fetch_url + extract, 100-word skip threshold per D-07) + `chunk_article()` (same greedy paragraph-packing as forum, source_filename=URL) [W3; INGEST-09]
+- [x] 06-04-PLAN.md — `load_web_articles()` (trafilatura fetch_url + extract, 100-word skip threshold per D-07) + `chunk_article()` (same greedy paragraph-packing as forum, source_filename=URL) [W3; INGEST-09]
 
 **Wave 4** (pipeline orchestration + eval gate, depends on all prior waves)
 - [ ] 06-05-PLAN.md — Extend `pipeline.py::main()` to call all 4 loaders; add --manuals-dir, --youtube-ids, --article-urls CLI args; end-of-run summaries per D-07; update requirements.txt; human checkpoint: full pipeline run + eval score verification [W4; INGEST-08, INGEST-09, INGEST-10, EVAL-05]
@@ -163,7 +163,7 @@ Cross-cutting constraints:
 | 3. Grounded Generation & Minimal Chat UI | 4/4 | Complete    | 2026-05-20 |
 | 4. UI Polish — Knobs, Markdown, Follow-ups | 4/4 | Complete    | 2026-05-22 |
 | 5. Evaluation Harness & Grounding Quality | 3/3 | Complete    | 2026-05-28 |
-| 6. Full Corpus Ingestion | 3/5 | In Progress|  |
+| 6. Full Corpus Ingestion | 4/5 | In Progress|  |
 | 7. Persistent Corpus & Cloud Deployment | 0/? | Not planned | — |
 
 ---

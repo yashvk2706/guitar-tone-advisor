@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In Progress
-stopped_at: "Phase 6 Plan 03 complete (2026-06-01) — YouTube transcript loader + chunker; INGEST-10 delivered; 3/5 Phase 6 plans done"
-last_updated: "2026-06-01T00:00:00.000Z"
+stopped_at: "Phase 6 Plan 04 complete (2026-06-02) — web article loader + chunker; INGEST-09 delivered; 4/5 Phase 6 plans done"
+last_updated: "2026-06-02T01:02:35Z"
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 24
-  completed_plans: 22
-  percent: 79
+  completed_plans: 23
+  percent: 83
 ---
 
 # State: Guitar Tone Advisor
@@ -73,6 +73,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 - [Phase 5 Plan 02]: Refusal contract smoke tests (tests/test_eval_refusal.py): 4 tests — 3 offline unit (negative-assertion, empty-context refusal, adversarial-mismatch-no-knobs) + 1 live integration gated on ANTHROPIC_API_KEY. All tests call stream_response() directly via asyncio.run() — never via HTTP endpoint (Pitfall 5 avoided). _FakeAnthropicClient/_FakeAnthropicStream copied verbatim from test_generation.py. module-level REFUSAL_PHRASES and _KNOB_RE constants for assertion machinery. Task 2 was verification-only — 3 offline tests passed GREEN against existing generation layer with no production code changes. 138 tests pass, 6 skipped. EVAL-03 satisfied.
 - [Phase 5 Plan 03]: RAGAS faithfulness CLI shipped: app/eval/ragas.py (two-step claim decomposer — sync Anthropic for claim calls, asyncio.run() wrapper for answer generation via AsyncAnthropic). parse_claims/parse_support handle bare + fenced JSON and fail safe (T-05-08). Answer/claim text interpolated ONLY into user-role messages; CLAIM_EXTRACT_SYSTEM + CLAIM_SUPPORT_SYSTEM are fixed system prompts (T-05-02 injection boundary). faithfulness(0, 0) == 0.0 (T-05-08). Separate eval/faithfulness_runs.jsonl (not mixed with eval/runs.jsonl — A2). _FakeSyncClient uses .messages.create() only (distinct from _FakeAnthropicClient .stream() — Pitfall 6). 6 offline unit tests all pass GREEN. 144 tests pass, 6 skipped. EVAL-04 satisfied. Phase 5 complete.
 - [Phase 6 Plan 03]: YouTubeTranscriptApi().fetch() instance method (v1.x) — NOT the removed static get_transcript(). source_type="youtube" hardcoded (never "youtube_transcript") to satisfy DB CHECK constraint. metadata["raw_segments"] threads {text, start} dicts from loader to chunker without re-fetch. yt-dlp VTT parse assigns start=0.0 for all segments (structured timestamps unavailable in auto-captions VTT without full parser). video_id validated with re.match(r'^[A-Za-z0-9_-]{11}$') before subprocess list call (shell=False) — T-06-06 mitigated. youtube-transcript-api==1.2.4 installed into venv (was missing; Rule 3 auto-fix). INGEST-10 satisfied.
+- [Phase 6 Plan 04]: trafilatura imported at module level (not inside function) so tests can patch app.ingest.loader.fetch_url and app.ingest.loader.extract. Explicit `if text is None: continue` guard before any text.split() call (T-06-12 mitigation). source_id for web_article = full URL string per CONTEXT.md. chunk_article() is structural twin of chunk_forum() — reuses _finalize_chunk() with source_id=URL as source_filename. No section_heading or page_number in article metadata (PDF-only keys per D-03). Token budget tests must use single-token marker words (compound words like "article0word" produce 3 tokens/word, triggering D-02 intra-paragraph split guard, not the greedy accumulator). trafilatura==2.0 + lxml_html_clean installed (Rule 3 auto-fixes). INGEST-09 satisfied.
 
 ## Roadmap Evolution
 
@@ -81,6 +82,6 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 
 ## Session Continuity
 
-Last session: 2026-06-01T00:00:00.000Z
-Stopped at: Phase 6 Plan 03 complete — YouTube transcript loader + chunker (INGEST-10). 3/5 Phase 6 plans done. Ready to execute Plan 04 (web articles).
+Last session: 2026-06-02T01:02:35Z
+Stopped at: Phase 6 Plan 04 complete — web article loader + chunker (INGEST-09). 4/5 Phase 6 plans done. Ready to execute Plan 05 (pipeline wiring + full-rebuild run).
 Resume file: None
