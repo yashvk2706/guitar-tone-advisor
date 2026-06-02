@@ -113,6 +113,8 @@ def chunk_document(raw_doc: RawDocument) -> list[Chunk]:
         return chunk_pdf(raw_doc)
     elif raw_doc.source_type == "youtube":
         return chunk_youtube(raw_doc)
+    elif raw_doc.source_type == "web_article":
+        return chunk_article(raw_doc)
 
     raise NotImplementedError(
         f"Chunker for source_type={raw_doc.source_type!r} not implemented"
@@ -462,6 +464,87 @@ def chunk_forum(raw_doc: RawDocument) -> list[Chunk]:
             )
         else:
             # Re-index in case earlier merges shifted positions.
+            merged.append(
+                _finalize_chunk(
+                    c.text.split("\n\n"), len(merged), raw_doc.source_id
+                )
+            )
+
+    return merged
+
+
+# ---------------------------------------------------------------------------
+# Web article chunker (Phase 6 Plan 04, INGEST-09).
+# ---------------------------------------------------------------------------
+
+
+def chunk_article(raw_doc: RawDocument) -> list[Chunk]:
+    """Paragraph-packing chunker for web articles (INGEST-09).
+
+    Algorithm is identical to ``chunk_forum`` — same greedy accumulator,
+    same forward-merge post-pass, same ``_finalize_chunk()`` helper.  The
+    only difference from ``chunk_forum`` is that ``source_id`` is the full
+    article URL (e.g. ``"https://www.premierguitar.com/diy/..."``) rather
+    than a filename, so ``metadata["source_filename"]`` carries the URL.
+
+    No section-aware or page-number metadata is added — those are PDF-only
+    concerns (D-03, 06-02-PLAN.md).  Articles are treated as a flat stream
+    of paragraphs with no heading hierarchy.
+
+    Args:
+        raw_doc: A ``RawDocument`` with ``source_type="web_article"`` and
+            ``source_id`` set to the full URL string.
+
+    Returns:
+        List of ``Chunk`` instances.  Empty list if the document has no text.
+    """
+    blocks = _split_paragraphs(raw_doc.text)
+    if not blocks:
+        return []
+
+    # Pre-compute tokens + word counts for every block; flag forward-merge
+    # candidates so the greedy loop can branch on them in O(1).
+    block_info = [
+        (b, len(_ENCODING.encode(b)), len(b.split()) < MIN_PARAGRAPH_WORDS)
+        for b in blocks
+    ]
+
+    chunks: list[Chunk] = []
+    current: list[str] = []
+    current_tokens = 0
+    _SEPARATOR_TOKENS = 1  # "\n\n" separator between paragraphs costs 1 token
+
+    for block, tokens, _must_merge in block_info:
+        projected = (
+            current_tokens
+            + (_SEPARATOR_TOKENS if current else 0)
+            + tokens
+        )
+
+        if current and projected > MAX_TOKENS:
+            chunks.append(_finalize_chunk(current, len(chunks), raw_doc.source_id))
+            current = [block]
+            current_tokens = tokens
+        else:
+            current.append(block)
+            current_tokens = projected
+
+    if current:
+        chunks.append(_finalize_chunk(current, len(chunks), raw_doc.source_id))
+
+    # ----- Forward-merge post-pass (D-01) -----
+    # Merge any all-short chunk into the preceding chunk's blocks.
+    merged: list[Chunk] = []
+    for c in chunks:
+        chunk_words = len(c.text.split())
+        if chunk_words < MIN_PARAGRAPH_WORDS and merged:
+            prev = merged.pop()
+            prev_blocks = prev.text.split("\n\n")
+            prev_blocks.extend(c.text.split("\n\n"))
+            merged.append(
+                _finalize_chunk(prev_blocks, prev.chunk_index, raw_doc.source_id)
+            )
+        else:
             merged.append(
                 _finalize_chunk(
                     c.text.split("\n\n"), len(merged), raw_doc.source_id

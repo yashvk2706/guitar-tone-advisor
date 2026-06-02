@@ -561,9 +561,22 @@ def test_article_chunker_dispatch() -> None:
 
 
 def test_article_chunks_within_token_budget() -> None:
-    """All chunks from chunk_article() have token_count <= MAX_TOKENS (500)."""
+    """All chunks from chunk_article() have token_count <= MAX_TOKENS (500).
+
+    Uses single-token marker words (like 'alpha', 'beta') so that
+    _paragraph_of_tokens(400, 'alpha') genuinely produces ~400 tokens.
+    Multi-token compound words (e.g. 'article0word') would produce 3 tokens
+    each, inflating a single paragraph beyond the budget, which triggers
+    D-02 (no intra-paragraph splits) rather than the greedy pack logic.
+    """
     # Build a multi-paragraph article that forces multiple chunks.
-    paragraphs = [_paragraph_of_tokens(400, f"article{i}word") for i in range(4)]
+    # Each paragraph is ~400 tokens, so they cannot be packed together (> 500).
+    paragraphs = [
+        _paragraph_of_tokens(400, "alpha"),
+        _paragraph_of_tokens(400, "beta"),
+        _paragraph_of_tokens(400, "gamma"),
+        _paragraph_of_tokens(400, "delta"),
+    ]
     long_text = "\n\n".join(paragraphs)
     doc = _make_article_doc(text=long_text)
     chunks = chunk_article(doc)
