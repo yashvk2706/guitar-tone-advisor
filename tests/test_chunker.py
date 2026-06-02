@@ -506,3 +506,103 @@ def test_youtube_source_type_is_correct_string() -> None:
         "Found forbidden string 'youtube_transcript' in chunker.py — "
         "source_type must be 'youtube' to satisfy the DB CHECK constraint"
     )
+
+
+# ---------------------------------------------------------------------------
+# Web article chunker tests (Phase 6 Plan 04).
+# ---------------------------------------------------------------------------
+
+import hashlib as _hashlib  # noqa: E402
+
+from app.ingest.chunker import chunk_article  # noqa: E402
+
+# 120 words of body text — enough for one paragraph that passes the 100-word
+# article loader threshold and the 40-word forward-merge floor.
+_ARTICLE_BODY = " ".join(["word"] * 120) + "."
+
+# A URL used as source_id for all article chunker tests.
+_ARTICLE_URL = "https://example.com/article"
+
+
+def _make_article_doc(
+    text: str = _ARTICLE_BODY,
+    source_id: str = _ARTICLE_URL,
+) -> RawDocument:
+    """Build a synthetic web_article RawDocument inline."""
+    return RawDocument(
+        source_type="web_article",
+        source_id=source_id,
+        title=None,
+        text=text,
+        content_hash=_hashlib.sha256(text.encode("utf-8")).hexdigest(),
+    )
+
+
+def test_article_chunk_metadata() -> None:
+    """All chunks from chunk_article() carry source_filename equal to the URL."""
+    doc = _make_article_doc()
+    chunks = chunk_article(doc)
+    assert len(chunks) > 0, "Expected at least one chunk from article"
+    for chunk in chunks:
+        assert "source_filename" in chunk.metadata, (
+            f"Missing 'source_filename' in chunk metadata: {chunk.metadata}"
+        )
+        assert chunk.metadata["source_filename"] == _ARTICLE_URL, (
+            f"source_filename must be the URL, got: {chunk.metadata['source_filename']!r}"
+        )
+
+
+def test_article_chunker_dispatch() -> None:
+    """chunk_document() routes source_type='web_article' to chunk_article() without NotImplementedError."""
+    doc = _make_article_doc()
+    # Must not raise NotImplementedError
+    chunks = chunk_document(doc)
+    assert isinstance(chunks, list)
+
+
+def test_article_chunks_within_token_budget() -> None:
+    """All chunks from chunk_article() have token_count <= MAX_TOKENS (500)."""
+    # Build a multi-paragraph article that forces multiple chunks.
+    paragraphs = [_paragraph_of_tokens(400, f"article{i}word") for i in range(4)]
+    long_text = "\n\n".join(paragraphs)
+    doc = _make_article_doc(text=long_text)
+    chunks = chunk_article(doc)
+    assert len(chunks) > 0
+    for chunk in chunks:
+        assert chunk.token_count <= MAX_TOKENS, (
+            f"Article chunk exceeds MAX_TOKENS ({MAX_TOKENS}): token_count={chunk.token_count}"
+        )
+
+
+def test_article_no_section_heading_in_metadata() -> None:
+    """chunk_article() does NOT add 'section_heading' or 'page_number' to metadata (PDF-only keys)."""
+    doc = _make_article_doc()
+    chunks = chunk_article(doc)
+    assert len(chunks) > 0, "Expected at least one chunk"
+    for chunk in chunks:
+        assert "section_heading" not in chunk.metadata, (
+            f"'section_heading' must not be in article chunk metadata (PDF-only): {chunk.metadata}"
+        )
+        assert "page_number" not in chunk.metadata, (
+            f"'page_number' must not be in article chunk metadata (PDF-only): {chunk.metadata}"
+        )
+
+
+def test_article_short_paragraph_merged() -> None:
+    """A <40-word block is not emitted as a standalone chunk (forward-merge behavior)."""
+    p1 = _paragraph_of_tokens(350, "articleword")  # large — fills one chunk
+    short_aside = "A brief side note about this topic."  # ~7 words, < 40
+    p3 = _paragraph_of_tokens(200, "articlemore")
+    text = f"{p1}\n\n{short_aside}\n\n{p3}"
+    doc = _make_article_doc(text=text)
+    chunks = chunk_article(doc)
+
+    # The short paragraph must exist inside some chunk.
+    assert any(short_aside in c.text for c in chunks), (
+        "Short paragraph text should be present in at least one chunk"
+    )
+    # But no chunk should consist ONLY of the short paragraph.
+    for chunk in chunks:
+        assert chunk.text.strip() != short_aside.strip(), (
+            "<40-word paragraph emitted as standalone article chunk; forward-merge failed"
+        )
