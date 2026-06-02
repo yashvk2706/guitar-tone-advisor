@@ -139,7 +139,7 @@ Cross-cutting constraints:
 - [x] 06-04-PLAN.md — `load_web_articles()` (trafilatura fetch_url + extract, 100-word skip threshold per D-07) + `chunk_article()` (same greedy paragraph-packing as forum, source_filename=URL) [W3; INGEST-09]
 
 **Wave 4** (pipeline orchestration + eval gate, depends on all prior waves)
-- [ ] 06-05-PLAN.md — Extend `pipeline.py::main()` to call all 4 loaders; add --manuals-dir, --youtube-ids, --article-urls CLI args; end-of-run summaries per D-07; update requirements.txt; human checkpoint: full pipeline run + eval score verification [W4; INGEST-08, INGEST-09, INGEST-10, EVAL-05]
+- [x] 06-05-PLAN.md — Extend `pipeline.py::main()` to call all 4 loaders; add --manuals-dir, --youtube-ids, --article-urls CLI args; end-of-run summaries per D-07; update requirements.txt; human checkpoint: full pipeline run + eval score verification [W4; INGEST-08, INGEST-09, INGEST-10, EVAL-05]
 
 ### Phase 7: Persistent Corpus & Cloud Deployment
 **Goal:** (1) Confirm the corpus persists across Docker restarts without re-ingestion — `docker-compose.yml` already has a `pgdata` named volume; the key constraint is that `docker-compose down -v` destroys it and must never be used in normal operation (document this clearly). (2) Deploy the full app to AWS using available free credits so others can access it at a public HTTPS URL — containerised FastAPI + Next.js, Postgres + pgvector on AWS (RDS or EC2-hosted Docker), API keys managed via AWS Secrets Manager or EC2 environment, corpus pre-seeded so no manual pipeline run is needed after deploy.
@@ -152,6 +152,7 @@ Cross-cutting constraints:
   3. The app is reachable at a public HTTPS URL (nginx + Let's Encrypt or Caddy); the `/health` endpoint returns `{"status": "ok"}` over HTTPS
   4. API keys (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`) are stored as AWS Secrets Manager secrets or EC2 instance env vars — never committed to the repo
   5. The deployed Postgres instance has the full corpus pre-seeded (pg_dump/restore or pipeline run as a one-time deploy step); a fresh user visiting the URL can ask a tone question and receive a cited answer without any manual setup
+**Pre-deployment prerequisite:** Fix YouTube transcript ingestion (all 13 videos blocked by YouTube bot detection — `RequestBlocked()` on youtube-transcript-api; yt-dlp fallback needs browser cookies via `--cookies-from-browser chrome`). This must be resolved before deployment so the corpus includes YouTube data.
 **Plans:** Not planned yet
 
 ## Progress
@@ -163,7 +164,7 @@ Cross-cutting constraints:
 | 3. Grounded Generation & Minimal Chat UI | 4/4 | Complete    | 2026-05-20 |
 | 4. UI Polish — Knobs, Markdown, Follow-ups | 4/4 | Complete    | 2026-05-22 |
 | 5. Evaluation Harness & Grounding Quality | 3/3 | Complete    | 2026-05-28 |
-| 6. Full Corpus Ingestion | 4/5 | In Progress|  |
+| 6. Full Corpus Ingestion | 5/5 | Complete | 2026-06-02 |
 | 7. Persistent Corpus & Cloud Deployment | 0/? | Not planned | — |
 
 ---
