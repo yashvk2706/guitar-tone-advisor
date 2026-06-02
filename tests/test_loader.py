@@ -168,3 +168,94 @@ def test_load_pdf_manuals_sorted_order() -> None:
     assert [d.source_id for d in first] == [d.source_id for d in second], (
         "load_pdf_manuals must return documents in deterministic sorted order"
     )
+
+
+# ---------------------------------------------------------------------------
+# YouTube transcript loader tests (Phase 6 Plan 03).
+# ---------------------------------------------------------------------------
+
+import unittest.mock  # noqa: E402
+
+from app.ingest.loader import load_youtube_transcripts  # noqa: E402
+
+IDS_FILE = Path(__file__).resolve().parent.parent / "raw_data" / "youtube_ids.txt"
+
+
+class _FakeSnippet:
+    """Minimal stand-in for a FetchedTranscriptSnippet."""
+
+    def __init__(self, text: str, start: float) -> None:
+        self.text = text
+        self.start = start
+
+
+def test_parse_youtube_ids() -> None:
+    """_parse_youtube_ids strips inline comments and returns 13 clean IDs."""
+    from app.ingest.loader import _parse_youtube_ids
+
+    ids = _parse_youtube_ids(IDS_FILE)
+    assert len(ids) == 13, f"Expected 13 IDs, got {len(ids)}"
+    assert ids[0] == "pLA57AnxTpI", f"First ID mismatch: {ids[0]!r}"
+    for vid_id in ids:
+        assert "#" not in vid_id, f"ID contains '#': {vid_id!r}"
+        assert not vid_id.strip() != vid_id, f"ID has surrounding whitespace: {vid_id!r}"
+        assert " " not in vid_id, f"ID contains space: {vid_id!r}"
+
+
+def test_youtube_source_type() -> None:
+    """All RawDocuments from load_youtube_transcripts have source_type=='youtube'."""
+    snippets = [_FakeSnippet("hello world foo", 0.0), _FakeSnippet("bar baz qux", 5.0), _FakeSnippet("last bit", 10.0)]
+    with unittest.mock.patch("app.ingest.loader.YouTubeTranscriptApi") as MockAPI:
+        instance = MockAPI.return_value
+        instance.fetch.return_value = snippets
+        docs = load_youtube_transcripts(IDS_FILE)
+    assert len(docs) > 0
+    assert all(d.source_type == "youtube" for d in docs), (
+        "All YouTube docs must have source_type='youtube'"
+    )
+
+
+def test_youtube_source_type_not_transcript() -> None:
+    """No RawDocument from load_youtube_transcripts has source_type=='youtube_transcript'."""
+    snippets = [_FakeSnippet("hello world foo", 0.0), _FakeSnippet("bar baz qux", 5.0), _FakeSnippet("last bit", 10.0)]
+    with unittest.mock.patch("app.ingest.loader.YouTubeTranscriptApi") as MockAPI:
+        instance = MockAPI.return_value
+        instance.fetch.return_value = snippets
+        docs = load_youtube_transcripts(IDS_FILE)
+    assert not any(d.source_type == "youtube_transcript" for d in docs), (
+        "source_type must never be 'youtube_transcript'"
+    )
+
+
+def test_youtube_metadata_has_raw_segments() -> None:
+    """metadata['raw_segments'] is a list of dicts with 'text' and 'start' keys."""
+    snippets = [_FakeSnippet("hello world foo", 0.0), _FakeSnippet("bar baz qux", 5.0), _FakeSnippet("last bit", 10.0)]
+    with unittest.mock.patch("app.ingest.loader.YouTubeTranscriptApi") as MockAPI:
+        instance = MockAPI.return_value
+        instance.fetch.return_value = snippets
+        docs = load_youtube_transcripts(IDS_FILE)
+    assert len(docs) > 0
+    for doc in docs:
+        assert "raw_segments" in doc.metadata, (
+            f"Missing 'raw_segments' in metadata for {doc.source_id!r}"
+        )
+        raw_segs = doc.metadata["raw_segments"]
+        assert isinstance(raw_segs, list), "raw_segments must be a list"
+        assert len(raw_segs) == 3, f"Expected 3 segments, got {len(raw_segs)}"
+        for seg in raw_segs:
+            assert "text" in seg, f"Segment missing 'text' key: {seg!r}"
+            assert "start" in seg, f"Segment missing 'start' key: {seg!r}"
+
+
+def test_youtube_loader_skips_on_failure() -> None:
+    """When api.fetch() raises and yt-dlp also fails, the video is skipped."""
+    from youtube_transcript_api import VideoUnavailable
+
+    with (
+        unittest.mock.patch("app.ingest.loader.YouTubeTranscriptApi") as MockAPI,
+        unittest.mock.patch("app.ingest.loader._load_via_ytdlp", return_value=None),
+    ):
+        instance = MockAPI.return_value
+        instance.fetch.side_effect = VideoUnavailable("pLA57AnxTpI")
+        docs = load_youtube_transcripts(IDS_FILE)
+    assert docs == [], f"Expected empty list when all fetches fail, got {len(docs)} docs"
