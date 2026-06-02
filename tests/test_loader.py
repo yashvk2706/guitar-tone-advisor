@@ -259,3 +259,108 @@ def test_youtube_loader_skips_on_failure() -> None:
         instance.fetch.side_effect = VideoUnavailable("pLA57AnxTpI")
         docs = load_youtube_transcripts(IDS_FILE)
     assert docs == [], f"Expected empty list when all fetches fail, got {len(docs)} docs"
+
+
+# ---------------------------------------------------------------------------
+# Web article loader tests (Phase 6 Plan 04).
+# ---------------------------------------------------------------------------
+
+from app.ingest.loader import load_web_articles  # noqa: E402
+
+ARTICLE_URLS_FILE = Path(__file__).resolve().parent.parent / "raw_data" / "article_urls.txt"
+
+# A body of text with > 100 words (used in multiple article loader tests).
+_LONG_ARTICLE_TEXT = " ".join(["word"] * 120) + "."
+
+
+def test_article_loader_skip_short(tmp_path: Path) -> None:
+    """Articles with fewer than 100 extracted words are skipped."""
+    urls_file = tmp_path / "urls.txt"
+    urls_file.write_text("https://example.com/short-article\n", encoding="utf-8")
+
+    short_text = "only ten words total here and a bit more"  # < 100 words
+
+    with (
+        unittest.mock.patch("app.ingest.loader.fetch_url", return_value="downloaded"),
+        unittest.mock.patch("app.ingest.loader.extract", return_value=short_text),
+    ):
+        docs = load_web_articles(urls_file)
+
+    assert docs == [], (
+        f"Expected empty list for short article, got {len(docs)} docs"
+    )
+
+
+def test_article_loader_skip_none_extract(tmp_path: Path) -> None:
+    """When trafilatura.extract() returns None, no AttributeError is raised and the URL is skipped."""
+    urls_file = tmp_path / "urls.txt"
+    urls_file.write_text("https://example.com/none-article\n", encoding="utf-8")
+
+    with (
+        unittest.mock.patch("app.ingest.loader.fetch_url", return_value="downloaded"),
+        unittest.mock.patch("app.ingest.loader.extract", return_value=None),
+    ):
+        # Must NOT raise AttributeError (Pitfall 6 / T-06-12 mitigation)
+        docs = load_web_articles(urls_file)
+
+    assert docs == [], (
+        f"Expected empty list when extract returns None, got {len(docs)} docs"
+    )
+
+
+def test_article_loader_source_type(tmp_path: Path) -> None:
+    """All valid articles have source_type == 'web_article'."""
+    urls_file = tmp_path / "urls.txt"
+    urls_file.write_text(
+        "https://example.com/article1\nhttps://example.com/article2\n",
+        encoding="utf-8",
+    )
+
+    with (
+        unittest.mock.patch("app.ingest.loader.fetch_url", return_value="downloaded"),
+        unittest.mock.patch("app.ingest.loader.extract", return_value=_LONG_ARTICLE_TEXT),
+    ):
+        docs = load_web_articles(urls_file)
+
+    assert len(docs) == 2
+    assert all(d.source_type == "web_article" for d in docs), (
+        "All article docs must have source_type='web_article'"
+    )
+
+
+def test_article_loader_source_id_is_url(tmp_path: Path) -> None:
+    """source_id is the full URL string (not a file path)."""
+    urls_file = tmp_path / "urls.txt"
+    urls_file.write_text(
+        "https://www.premierguitar.com/diy/silver-and-black/my-favorite-tele-tones\n",
+        encoding="utf-8",
+    )
+
+    with (
+        unittest.mock.patch("app.ingest.loader.fetch_url", return_value="downloaded"),
+        unittest.mock.patch("app.ingest.loader.extract", return_value=_LONG_ARTICLE_TEXT),
+    ):
+        docs = load_web_articles(urls_file)
+
+    assert len(docs) == 1
+    assert docs[0].source_id.startswith("https://"), (
+        f"source_id must start with 'https://', got: {docs[0].source_id!r}"
+    )
+    assert docs[0].source_id == "https://www.premierguitar.com/diy/silver-and-black/my-favorite-tele-tones"
+
+
+def test_article_loader_count(tmp_path: Path) -> None:
+    """With a 3-URL synthetic file and valid mock responses, 3 docs are returned."""
+    urls_file = tmp_path / "urls.txt"
+    urls_file.write_text(
+        "https://example.com/a\nhttps://example.com/b\nhttps://example.com/c\n",
+        encoding="utf-8",
+    )
+
+    with (
+        unittest.mock.patch("app.ingest.loader.fetch_url", return_value="downloaded"),
+        unittest.mock.patch("app.ingest.loader.extract", return_value=_LONG_ARTICLE_TEXT),
+    ):
+        docs = load_web_articles(urls_file)
+
+    assert len(docs) == 3, f"Expected 3 docs for 3-URL file, got {len(docs)}"
