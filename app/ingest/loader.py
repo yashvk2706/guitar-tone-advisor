@@ -1,4 +1,4 @@
-"""Forum-post loader.
+"""Forum-post and PDF manual loader.
 
 Reads ``.txt`` files from a corpus directory (the Phase 1 source is
 ``raw_data/forum_posts/``) and returns a sorted list of ``RawDocument``
@@ -6,20 +6,29 @@ dataclasses. Each document is NFKC-normalized once at load time and tagged
 with a deterministic sha256 ``content_hash`` so the writer in plan 01-04 can
 short-circuit re-ingestion when nothing has changed.
 
+Phase 6 adds ``load_pdf_manuals()`` for the 15 amp/pedal manuals in
+``raw_data/manuals/``. Uses ``pymupdf4llm`` as primary extractor with a
+``pypdf`` fallback. Corrupt PDFs that fail both extractors are logged and
+skipped — the pipeline continues.
+
 This module is pure — it never opens DB connections, never makes network
 calls, and never recurses into subdirectories. Path traversal defense is
-delegated to ``Path.resolve()`` + ``glob("*.txt")`` (T-02-01); see the
-threat model in 01-02-PLAN.md.
+delegated to ``Path.resolve()`` + ``glob()`` (T-02-01, T-06-03); see the
+threat models in 01-02-PLAN.md and 06-02-PLAN.md.
 """
 
 from __future__ import annotations
 
 import dataclasses
+import functools
 import hashlib
+import logging
 import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -110,3 +119,81 @@ def load_forum_posts(directory: Path) -> list[RawDocument]:
         )
 
     return documents
+
+
+@functools.lru_cache(maxsize=None)
+def load_pdf_manuals(directory: Path) -> list[RawDocument]:
+    """Load every ``*.pdf`` file in ``directory`` as a ``RawDocument``.
+
+    Uses ``pymupdf4llm`` as the primary extractor to obtain GFM-formatted
+    markdown text (preserving headings and table structure for the chunker).
+    Falls back to ``pypdf.PdfReader`` if pymupdf4llm raises. If both fail,
+    logs a WARNING and skips the file — the pipeline continues.
+
+    The ``source_id`` is the full absolute path (``str(pdf_path.resolve())``)
+    so that ``chunk_pdf()`` can pass it directly to
+    ``pymupdf4llm.to_markdown()`` from any working directory without a
+    ``FileNotFoundError`` (T-06-03 mitigation).
+
+    Args:
+        directory: Path to the manuals directory.  Must exist and be readable.
+
+    Returns:
+        List of ``RawDocument`` instances sorted by ``source_id``, one per
+        ``.pdf`` file.  Empty list if the directory contains no PDFs.
+    """
+
+    import pymupdf4llm  # local import — optional heavy dependency
+    from pypdf import PdfReader  # local import — optional heavy dependency
+
+    root = Path(directory).resolve()
+    documents: list[RawDocument] = []
+
+    for pdf_path in sorted(root.glob("*.pdf")):
+        abs_path = pdf_path.resolve()
+        text: str | None = None
+
+        # --- Primary extractor: pymupdf4llm (preserves GFM headings/tables) ---
+        try:
+            pages = pymupdf4llm.to_markdown(str(abs_path), page_chunks=True)
+            text = "\n\n".join(p["text"] for p in pages)
+        except Exception as primary_exc:
+            logger.debug(
+                "pymupdf4llm failed for %s: %r — trying pypdf fallback",
+                abs_path.name,
+                primary_exc,
+            )
+
+            # --- Fallback extractor: pypdf (plain text, no markdown) ---
+            try:
+                reader = PdfReader(str(abs_path))
+                page_texts = []
+                for page in reader.pages:
+                    extracted = page.extract_text()
+                    if extracted:
+                        page_texts.append(extracted)
+                text = "\n\n".join(page_texts)
+            except Exception as fallback_exc:
+                logger.warning(
+                    "PDF load failed %s: %r",
+                    abs_path.name,
+                    fallback_exc,
+                )
+                continue  # skip this file; pipeline continues
+
+        normalized = _normalize(text or "")
+        content_hash = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+        title = abs_path.stem  # raw stem, no titlecasing — e.g. "Marshall JCM800 manual"
+
+        documents.append(
+            RawDocument(
+                source_type="pdf_manual",
+                source_id=str(abs_path),
+                title=title,
+                text=normalized,
+                content_hash=content_hash,
+            )
+        )
+
+    # Sort by source_id (full absolute path) for deterministic ordering.
+    return sorted(documents, key=lambda d: d.source_id)
