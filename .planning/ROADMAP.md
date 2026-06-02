@@ -169,7 +169,7 @@ Plans:
 | 4. UI Polish — Knobs, Markdown, Follow-ups | 4/4 | Complete    | 2026-05-22 |
 | 5. Evaluation Harness & Grounding Quality | 3/3 | Complete    | 2026-05-28 |
 | 6. Full Corpus Ingestion | 5/5 | Complete | 2026-06-02 |
-| 7. Persistent Corpus & Cloud Deployment | 0/? | Not planned | — |
+| 7. Persistent Corpus & Cloud Deployment | 0/3 | Ready to execute | — |
 
 ---
 *Roadmap created 2026-05-15. Every v1 requirement maps to exactly one phase; coverage is 100%.*
@@ -181,3 +181,4 @@ Plans:
 *Revision 2026-05-21: Phase 4 planned — 4 plans across 3 waves. W1: 04-01 (react-markdown); W2: 04-02 (rotary knobs) + 04-03 (loading state + copy button) in parallel; W3: 04-04 (follow-up rail). All 6 requirements covered: CHAT-04, UI-01 through UI-05.*
 *Revision 2026-05-29: Phase 6 added — Full Corpus Ingestion (PDF manuals, YouTube transcripts, web articles; eval score improvement gate). Phase 7 added — Persistent Corpus & Cloud Deployment (Docker volume persistence documentation + AWS EC2 deployment with pre-seeded corpus at public HTTPS URL).*
 *Revision 2026-05-29: Phase 6 planned — 5 plans across 4 waves. W1: 06-01 (writer bug fix + RawDocument metadata field); W2: 06-02 (PDF loader + chunker) + 06-03 (YouTube loader + chunker) in parallel; W3: 06-04 (article loader + chunker); W4: 06-05 (pipeline orchestration + requirements.txt + human eval checkpoint). All 4 requirements covered: INGEST-08, INGEST-09, INGEST-10, EVAL-05.*
+*Revision 2026-06-02: Phase 7 planned — 3 plans across 2 waves. W1: 07-01 (yt-dlp YouTube fix + yt-dlp[default]) + 07-02 (Dockerfile + scripts/start.sh + next.config.js env var + RUNNING.md + corpus_dump.sql gitignore) in parallel; W2: 07-03 (human deployment checkpoint: pipeline run + persistence verify + pg_dump→Railway restore + Railway/Vercel deploy + smoke tests). Platform override: Railway + Vercel (per CONTEXT.md D-01/D-02), not AWS EC2 as originally stated in ROADMAP goal. All 6 requirements covered: PERSIST-01, DEPLOY-01, DEPLOY-02, DEPLOY-03, DEPLOY-04, DEPLOY-05.*

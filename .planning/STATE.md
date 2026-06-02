@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: In Progress
 stopped_at: context exhaustion at 76% (2026-06-02)
-last_updated: "2026-06-02T16:33:17.159Z"
+last_updated: "2026-06-02T17:00:00.000Z"
 progress:
   total_phases: 7
-  completed_phases: 5
-  total_plans: 24
+  completed_phases: 6
+  total_plans: 27
   completed_plans: 23
-  percent: 71
+  percent: 85
 ---
 
 # State: Guitar Tone Advisor
@@ -31,6 +31,8 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 | 3 | Grounded Generation & Minimal Chat UI | Complete (4/4 plans) |
 | 4 | UI Polish — Knobs, Markdown, Follow-ups | Complete (4/4) |
 | 5 | Evaluation Harness & Grounding Quality | Complete (3/3 plans complete) |
+| 6 | Full Corpus Ingestion | Complete (5/5 plans) |
+| 7 | Persistent Corpus & Cloud Deployment | Ready to execute (3/3 plans) |
 
 ## Active Context
 
