@@ -429,6 +429,7 @@ def _load_via_ytdlp(video_id: str) -> "RawDocument | None":
                 "--sub-lang", "en",
                 "--sub-format", "vtt",
                 "--skip-download",
+                "--js-runtimes", "nodejs",  # yt-dlp defaults to deno; use node if present
                 f"https://www.youtube.com/watch?v={video_id}",
                 "-o", out_tmpl,
             ]
