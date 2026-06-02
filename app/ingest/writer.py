@@ -30,7 +30,9 @@ from typing import Sequence
 
 import psycopg
 
-# Stable namespace for deterministic chunk UUIDs derived from content_hash.
+# Stable namespace for deterministic chunk UUIDs.
+# Key is "{document_id}:{chunk_index}:{embedding_model}" — mirrors the unique
+# constraint so the UUID is globally unique even when two chunks share text.
 # Changing this value would invalidate all existing chunk IDs — never change it.
 _CHUNK_NS = uuid.UUID("c4e8b75f-2a3d-4f8e-9b1c-0d2e5f6a7b8c")
 
@@ -197,7 +199,7 @@ def upsert_chunks(
     """
     params = [
         (
-            str(uuid.uuid5(_CHUNK_NS, c.content_hash)),
+            str(uuid.uuid5(_CHUNK_NS, f"{document_id}:{c.chunk_index}:{embedding_model}")),
             document_id,
             source_type,
             c.chunk_index,
