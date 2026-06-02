@@ -399,3 +399,110 @@ def test_pdf_chunks_within_token_budget() -> None:
         assert chunk.token_count <= MAX_TOKENS, (
             f"Chunk exceeds MAX_TOKENS ({MAX_TOKENS}): token_count={chunk.token_count}"
         )
+
+
+# ---------------------------------------------------------------------------
+# YouTube chunker tests (Phase 6 Plan 03).
+# ---------------------------------------------------------------------------
+
+from app.ingest.chunker import chunk_youtube  # noqa: E402
+
+
+def _make_youtube_doc(
+    source_id: str = "testID123ab",
+    raw_segments: list | None = None,
+) -> RawDocument:
+    """Build a synthetic YouTube RawDocument."""
+    if raw_segments is None:
+        raw_segments = [
+            {"text": "word " * 50, "start": 0.0},
+            {"text": "word " * 50, "start": 10.5},
+        ]
+    full_text = " ".join(s["text"] for s in raw_segments)
+    import hashlib
+    content_hash = hashlib.sha256(full_text.encode("utf-8")).hexdigest()
+    return RawDocument(
+        source_type="youtube",
+        source_id=source_id,
+        title=None,
+        text=full_text,
+        content_hash=content_hash,
+        metadata={"raw_segments": raw_segments},
+    )
+
+
+def test_youtube_chunk_metadata() -> None:
+    """All chunks from chunk_youtube() carry video_id, start_time, source_filename."""
+    doc = _make_youtube_doc()
+    chunks = chunk_youtube(doc)
+    assert len(chunks) > 0, "Expected at least one chunk"
+    for chunk in chunks:
+        assert "video_id" in chunk.metadata, (
+            f"Missing 'video_id' in chunk metadata: {chunk.metadata}"
+        )
+        assert "start_time" in chunk.metadata, (
+            f"Missing 'start_time' in chunk metadata: {chunk.metadata}"
+        )
+        assert "source_filename" in chunk.metadata, (
+            f"Missing 'source_filename' in chunk metadata: {chunk.metadata}"
+        )
+        assert chunk.metadata["video_id"] == "testID123ab"
+        assert chunk.metadata["source_filename"] == "testID123ab"
+
+
+def test_youtube_chunk_start_time() -> None:
+    """First window start_time == segments[0]['start']; second window == first snippet's start."""
+    # Build enough segments to force at least 2 windows (each ~300 tokens per window).
+    seg_text = "token " * 60  # ~60 tokens per segment
+    # 6 segments of ~60 tokens each -> ~360 tokens per window (2 windows if split at ~300)
+    raw_segments = [
+        {"text": seg_text, "start": float(i * 5)} for i in range(10)
+    ]
+    doc = _make_youtube_doc(source_id="timeTestID1", raw_segments=raw_segments)
+    chunks = chunk_youtube(doc)
+    assert len(chunks) >= 2, (
+        f"Expected at least 2 chunks for 10 segments of ~60 tokens, got {len(chunks)}"
+    )
+    # First chunk: start_time == first segment's start (0.0).
+    assert chunks[0].metadata["start_time"] == 0.0, (
+        f"First chunk start_time should be 0.0, got {chunks[0].metadata['start_time']}"
+    )
+    # Second chunk: start_time == start of the first segment in that window (> 0.0).
+    assert chunks[1].metadata["start_time"] > 0.0, (
+        f"Second chunk start_time should be > 0.0, got {chunks[1].metadata['start_time']}"
+    )
+
+
+def test_youtube_source_type_dispatch() -> None:
+    """chunk_document() routes source_type='youtube' without raising NotImplementedError."""
+    doc = _make_youtube_doc()
+    # Must not raise NotImplementedError
+    chunks = chunk_document(doc)
+    assert isinstance(chunks, list)
+    assert len(chunks) > 0
+
+
+def test_youtube_chunks_within_token_budget() -> None:
+    """All chunks produced by chunk_youtube() have token_count <= MAX_TOKENS."""
+    # Large number of segments to force multiple windows.
+    seg_text = "word " * 100  # ~100 tokens
+    raw_segments = [{"text": seg_text, "start": float(i * 3)} for i in range(20)]
+    doc = _make_youtube_doc(source_id="budgetTestID", raw_segments=raw_segments)
+    chunks = chunk_youtube(doc)
+    assert len(chunks) > 0
+    for chunk in chunks:
+        assert chunk.token_count <= MAX_TOKENS, (
+            f"Chunk exceeds MAX_TOKENS ({MAX_TOKENS}): token_count={chunk.token_count}"
+        )
+
+
+def test_youtube_source_type_is_correct_string() -> None:
+    """The string 'youtube_transcript' must not appear anywhere in chunker.py."""
+    chunker_path = (
+        Path(__file__).resolve().parent.parent / "app" / "ingest" / "chunker.py"
+    )
+    contents = chunker_path.read_text(encoding="utf-8")
+    assert "youtube_transcript" not in contents, (
+        "Found forbidden string 'youtube_transcript' in chunker.py — "
+        "source_type must be 'youtube' to satisfy the DB CHECK constraint"
+    )
