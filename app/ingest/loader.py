@@ -19,6 +19,13 @@ subprocess when the primary API fails. Video IDs are validated against
 source_type is always ``"youtube"`` — never the transcript library name — to
 satisfy the DB CHECK constraint (allowed values: forum, pdf_manual, web_article, youtube).
 
+Phase 6 Plan 04 adds ``load_web_articles()`` which reads URLs from
+``raw_data/article_urls.txt``, scrapes each with ``trafilatura``, applies a
+100-word minimum threshold for paywall/thin-content detection, and returns
+``RawDocument`` instances with ``source_type="web_article"``. The function
+guards against ``trafilatura.extract()`` returning ``None`` (T-06-12
+mitigation) before any word-count check.
+
 This module is pure — it never opens DB connections and never recurses into
 subdirectories. Path traversal defense is delegated to ``Path.resolve()`` +
 ``glob()`` (T-02-01, T-06-03); see the threat models in 01-02-PLAN.md and
@@ -209,6 +216,98 @@ def load_pdf_manuals(directory: Path) -> list[RawDocument]:
 
     # Sort by source_id (full absolute path) for deterministic ordering.
     return sorted(documents, key=lambda d: d.source_id)
+
+
+# ---------------------------------------------------------------------------
+# Web article loader (Phase 6 Plan 04, INGEST-09).
+# ---------------------------------------------------------------------------
+
+# Module-level import — kept here so tests can patch the names
+# `app.ingest.loader.fetch_url` and `app.ingest.loader.extract`.
+from trafilatura import extract, fetch_url  # noqa: E402
+
+# Minimum word count threshold for paywall / thin-content detection.
+# Articles that fail this gate are logged and skipped (INGEST-09 requirement).
+_MIN_ARTICLE_WORDS = 100
+
+
+def load_web_articles(urls_file: Path) -> list[RawDocument]:
+    """Load web articles from a file of URLs using trafilatura.
+
+    Reads ``urls_file`` line by line; strips whitespace; skips blank lines.
+    For each URL:
+
+    1. Calls ``trafilatura.fetch_url(url)`` to download the page.
+       Skips with WARNING if ``fetch_url`` returns ``None``.
+    2. Calls ``trafilatura.extract(downloaded, include_tables=False,
+       favor_precision=True)`` to extract the article text.
+    3. Guards against ``None`` return (T-06-12 / Pitfall 6 mitigation):
+       logs a WARNING and continues — NEVER calls ``text.split()`` on None.
+    4. Skips if the extracted text has fewer than ``_MIN_ARTICLE_WORDS``
+       whitespace-split words (paywall / thin-content detection).
+    5. NFKC-normalizes and strips the text; computes a sha256 content_hash.
+    6. Returns ``RawDocument(source_type="web_article", source_id=url, ...)``.
+       ``source_id`` is the full URL string (not a filepath) per CONTEXT.md.
+
+    The returned list preserves URL-file order (URLs are not sorted — they
+    are a curated list, not a filesystem glob).
+
+    Args:
+        urls_file: Path to a newline-delimited file of article URLs.
+
+    Returns:
+        List of ``RawDocument`` instances with ``source_type="web_article"``.
+        Empty list if all URLs fail download, extraction, or the word-count
+        threshold.
+    """
+    documents: list[RawDocument] = []
+
+    for line in Path(urls_file).read_text(encoding="utf-8").splitlines():
+        url = line.strip()
+        if not url:
+            continue
+
+        # Step 1: download the page.
+        downloaded = fetch_url(url)
+        if downloaded is None:
+            logger.warning("Failed to download %s — skipping", url)
+            continue
+
+        # Step 2: extract article text.
+        text = extract(downloaded, include_tables=False, favor_precision=True)
+
+        # Step 3: CRITICAL — guard None before any .split() call (T-06-12).
+        if text is None:
+            logger.warning("Skipping %s: trafilatura returned None", url)
+            continue
+
+        # Step 4: word-count threshold.
+        word_count = len(text.split())
+        if word_count < _MIN_ARTICLE_WORDS:
+            logger.warning(
+                "Skipping %s: only %d words (< %d threshold)",
+                url,
+                word_count,
+                _MIN_ARTICLE_WORDS,
+            )
+            continue
+
+        # Step 5: normalize + hash.
+        normalized = _normalize(text)
+        content_hash = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+        # Step 6: build RawDocument.
+        documents.append(
+            RawDocument(
+                source_type="web_article",
+                source_id=url,
+                title=None,
+                text=normalized,
+                content_hash=content_hash,
+            )
+        )
+
+    return documents
 
 
 # ---------------------------------------------------------------------------
