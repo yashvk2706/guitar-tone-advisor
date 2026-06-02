@@ -16,8 +16,8 @@ from ``raw_data/youtube_ids.txt``, fetches transcripts via the v1.x
 ``YouTubeTranscriptApi`` instance API, and falls back to a ``yt-dlp``
 subprocess when the primary API fails. Video IDs are validated against
 ``r'^[A-Za-z0-9_-]{11}$'`` before being passed to the subprocess (T-06-06).
-source_type is always ``"youtube"`` — never ``"youtube_transcript"`` — to
-satisfy the DB CHECK constraint.
+source_type is always ``"youtube"`` — never the transcript library name — to
+satisfy the DB CHECK constraint (allowed values: forum, pdf_manual, web_article, youtube).
 
 This module is pure — it never opens DB connections and never recurses into
 subdirectories. Path traversal defense is delegated to ``Path.resolve()`` +

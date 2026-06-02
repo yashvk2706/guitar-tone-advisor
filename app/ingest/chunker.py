@@ -101,7 +101,8 @@ def chunk_document(raw_doc: RawDocument) -> list[Chunk]:
     """Dispatch to the per-source-type chunker.
 
     CLAUDE.md hard constraint: "Chunking dispatches on source_type — no
-    universal chunker." Supported source types: ``"forum"``, ``"pdf_manual"``.
+    universal chunker." Supported source types: ``"forum"``, ``"pdf_manual"``,
+    ``"youtube"``.
     Unknown source types raise ``NotImplementedError`` so accidental callers
     fail loudly rather than silently producing degenerate output.
     """
@@ -110,6 +111,8 @@ def chunk_document(raw_doc: RawDocument) -> list[Chunk]:
         return chunk_forum(raw_doc)
     elif raw_doc.source_type == "pdf_manual":
         return chunk_pdf(raw_doc)
+    elif raw_doc.source_type == "youtube":
+        return chunk_youtube(raw_doc)
 
     raise NotImplementedError(
         f"Chunker for source_type={raw_doc.source_type!r} not implemented"
@@ -464,5 +467,149 @@ def chunk_forum(raw_doc: RawDocument) -> list[Chunk]:
                     c.text.split("\n\n"), len(merged), raw_doc.source_id
                 )
             )
+
+    return merged
+
+
+# ---------------------------------------------------------------------------
+# YouTube transcript chunker (Phase 6 Plan 03, INGEST-10).
+# ---------------------------------------------------------------------------
+
+
+def _finalize_youtube_chunk(
+    segments: list[dict],
+    chunk_index: int,
+    video_id: str,
+) -> Chunk:
+    """Materialize a window of transcript segments into a frozen YouTube Chunk.
+
+    Args:
+        segments: Non-empty list of ``{"text": str, "start": float}`` dicts
+            for the current window.
+        chunk_index: 0-based position within the parent document (D-04).
+        video_id: The YouTube video ID — used as both ``source_filename`` and
+            ``video_id`` in the metadata (D-10).
+
+    Returns:
+        A frozen ``Chunk`` with extended metadata carrying ``video_id``,
+        ``start_time``, and ``source_filename``.
+    """
+    text = unicodedata.normalize("NFKC", "\n\n".join(s["text"] for s in segments)).strip()
+    start_time: float = segments[0]["start"] if segments else 0.0
+    return Chunk(
+        chunk_index=chunk_index,
+        text=text,
+        token_count=len(_ENCODING.encode(text)),
+        content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        metadata={
+            "source_filename": video_id,
+            "video_id": video_id,
+            "start_time": start_time,
+        },
+    )
+
+
+def chunk_youtube(raw_doc: RawDocument) -> list[Chunk]:
+    """Greedy segment-packing chunker for YouTube transcripts (INGEST-10).
+
+    Algorithm (mirrors ``chunk_forum`` per D-09 — non-overlapping windows):
+
+    1. Read ``raw_doc.metadata["raw_segments"]`` as the list of atomic units.
+       Each segment is ``{"text": str, "start": float}``.
+    2. If ``raw_segments`` is empty or missing, fall back to blank-line
+       paragraph splitting of ``raw_doc.text`` with ``start_time=0.0`` for
+       all chunks.
+    3. Pre-compute token counts for each segment via ``_ENCODING.encode()``.
+    4. Run the same greedy accumulator as ``chunk_forum``, closing a window
+       when adding the next segment would exceed ``MAX_TOKENS``.
+    5. ``start_time`` for each emitted chunk equals the ``"start"`` value of
+       the first segment in that window (D-10).
+    6. Forward-merge post-pass (D-01): chunks whose total word count is less
+       than ``MIN_PARAGRAPH_WORDS`` attach to the prior chunk.
+
+    Each chunk's metadata carries ``source_filename``, ``video_id``, and
+    ``start_time`` per D-03 / D-10.
+
+    Args:
+        raw_doc: A ``RawDocument`` with ``source_type="youtube"``.
+
+    Returns:
+        List of ``Chunk`` instances.  Empty list if the document has no text.
+    """
+    _SEPARATOR_TOKENS = 1  # "\n\n" between segments costs 1 token in cl100k_base
+
+    video_id = raw_doc.source_id
+    segments: list[dict] = raw_doc.metadata.get("raw_segments", [])
+
+    # ------------------------------------------------------------------ #
+    # Fallback: no raw_segments — use paragraph splitting with start=0.0. #
+    # ------------------------------------------------------------------ #
+    if not segments:
+        paragraphs = _split_paragraphs(raw_doc.text)
+        if not paragraphs:
+            return []
+        fallback_segs = [{"text": p, "start": 0.0} for p in paragraphs]
+        segments = fallback_segs
+
+    # Pre-compute token counts for every segment.
+    seg_tokens = [len(_ENCODING.encode(s["text"])) for s in segments]
+
+    chunks: list[Chunk] = []
+    current_segs: list[dict] = []
+    current_tokens: int = 0
+
+    for seg, tokens in zip(segments, seg_tokens):
+        projected = current_tokens + (_SEPARATOR_TOKENS if current_segs else 0) + tokens
+
+        if current_segs and projected > MAX_TOKENS:
+            # Close the current window.
+            chunks.append(_finalize_youtube_chunk(current_segs, len(chunks), video_id))
+            current_segs = [seg]
+            current_tokens = tokens
+        else:
+            current_segs.append(seg)
+            current_tokens = projected
+
+    # Emit any remaining segments as the final chunk.
+    if current_segs:
+        chunks.append(_finalize_youtube_chunk(current_segs, len(chunks), video_id))
+
+    # ----- Forward-merge post-pass (D-01) -----
+    # Merge any all-short chunk into the preceding chunk.
+    merged: list[Chunk] = []
+    for c in chunks:
+        chunk_words = len(c.text.split())
+        if chunk_words < MIN_PARAGRAPH_WORDS and merged:
+            prev = merged.pop()
+            # Reconstruct segments from the joined texts by treating each
+            # "\n\n"-separated block as a segment (start_time lost on merge,
+            # preserve the earlier chunk's start_time).
+            combined_text = unicodedata.normalize(
+                "NFKC",
+                "\n\n".join([prev.text, c.text]),
+            ).strip()
+            merged_start_time = prev.metadata["start_time"]
+            new_chunk = Chunk(
+                chunk_index=prev.chunk_index,
+                text=combined_text,
+                token_count=len(_ENCODING.encode(combined_text)),
+                content_hash=hashlib.sha256(combined_text.encode("utf-8")).hexdigest(),
+                metadata={
+                    "source_filename": video_id,
+                    "video_id": video_id,
+                    "start_time": merged_start_time,
+                },
+            )
+            merged.append(new_chunk)
+        else:
+            # Re-index to keep 0-based contiguous indices after merges.
+            reindexed = Chunk(
+                chunk_index=len(merged),
+                text=c.text,
+                token_count=c.token_count,
+                content_hash=c.content_hash,
+                metadata=c.metadata,
+            )
+            merged.append(reindexed)
 
     return merged
