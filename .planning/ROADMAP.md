@@ -153,7 +153,11 @@ Cross-cutting constraints:
   4. API keys (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`) are stored as AWS Secrets Manager secrets or EC2 instance env vars — never committed to the repo
   5. The deployed Postgres instance has the full corpus pre-seeded (pg_dump/restore or pipeline run as a one-time deploy step); a fresh user visiting the URL can ask a tone question and receive a cited answer without any manual setup
 **Pre-deployment prerequisite:** Fix YouTube transcript ingestion (all 13 videos blocked by YouTube bot detection — `RequestBlocked()` on youtube-transcript-api; yt-dlp fallback needs browser cookies via `--cookies-from-browser chrome`). This must be resolved before deployment so the corpus includes YouTube data.
-**Plans:** Not planned yet
+**Plans:** 3 plans across 2 waves (Railway + Vercel deployment per CONTEXT.md D-01/D-02, overriding the AWS reference in the original goal)
+Plans:
+- [ ] 07-01-PLAN.md — yt-dlp YouTube fix (Chrome cookies + remove invalid --js-runtimes nodejs) and requirements.txt → yt-dlp[default] [W1; INGEST-10, PERSIST-01]
+- [ ] 07-02-PLAN.md — Deployment infra: Dockerfile (python:3.12-slim) + scripts/start.sh + env-driven next.config.js + corpus_dump.sql gitignore + RUNNING.md persistence warning [W1; DEPLOY-01, DEPLOY-03, DEPLOY-05, PERSIST-01]
+- [ ] 07-03-PLAN.md — Human deployment checkpoint: full pipeline run, Docker persistence verify, pg_dump → Railway pgvector restore, Railway backend deploy, Vercel frontend deploy, end-to-end smoke tests [W2; PERSIST-01, DEPLOY-02, DEPLOY-03, DEPLOY-04, DEPLOY-05]
 
 ## Progress
 
