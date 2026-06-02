@@ -37,7 +37,12 @@ from pathlib import Path
 from app.db import get_conn
 from app.embeddings.factory import get_embedder
 from app.ingest.chunker import chunk_document
-from app.ingest.loader import load_forum_posts
+from app.ingest.loader import (
+    load_forum_posts,
+    load_pdf_manuals,
+    load_youtube_transcripts,
+    load_web_articles,
+)
 from app.ingest.writer import (
     chunks_to_embed,
     complete_run,
@@ -71,6 +76,21 @@ def _build_parser() -> argparse.ArgumentParser:
         "--forum-dir",
         default="raw_data/forum_posts",
         help="Directory containing forum .txt files (default: raw_data/forum_posts).",
+    )
+    parser.add_argument(
+        "--manuals-dir",
+        default="raw_data/manuals",
+        help="Directory containing PDF manual files (default: raw_data/manuals).",
+    )
+    parser.add_argument(
+        "--youtube-ids",
+        default="raw_data/youtube_ids.txt",
+        help="File of YouTube video IDs, one per line (default: raw_data/youtube_ids.txt).",
+    )
+    parser.add_argument(
+        "--article-urls",
+        default="raw_data/article_urls.txt",
+        help="File of article URLs, one per line (default: raw_data/article_urls.txt).",
     )
     return parser
 
@@ -141,18 +161,156 @@ def main(argv: list[str] | None = None) -> int:
                 len(to_skip),
             )
 
+        # --- PDF manuals ---
+        # Count total attempted before loading (failed PDFs are logged + skipped
+        # inside the loader, so total_attempted = glob count, not len(loaded)).
+        manuals_dir = Path(args.manuals_dir)
+        n_pdf_total = len(list(manuals_dir.glob("*.pdf"))) if manuals_dir.exists() else 0
+        pdf_docs = load_pdf_manuals(manuals_dir) if manuals_dir.exists() else []
+        n_pdf_ingested = 0
+        n_pdf_loader_skipped = 0
+        logger.info("Loaded %d PDF manuals from %s", len(pdf_docs), args.manuals_dir)
+
+        for i, raw_doc in enumerate(pdf_docs, start=1):
+            doc_id = upsert_document(conn, raw_doc)
+            chunks = chunk_document(raw_doc)
+            to_embed, to_skip = chunks_to_embed(
+                conn, doc_id, chunks, embedder.model
+            )
+            total_skipped += len(to_skip)
+            if to_embed:
+                result = embedder.embed_documents([c.text for c in to_embed])
+                upsert_chunks(
+                    conn,
+                    doc_id,
+                    to_embed,
+                    result.vectors,
+                    embedder.model,
+                    source_type=raw_doc.source_type,
+                )
+                total_inserted += len(to_embed)
+                n_pdf_ingested += 1
+            conn.commit()
+            logger.info(
+                "[pdf %d/%d] %s: +%d chunks, =%d skipped",
+                i,
+                len(pdf_docs),
+                raw_doc.source_id,
+                len(to_embed),
+                len(to_skip),
+            )
+
+        # Count PDFs the loader skipped (corrupted / both extractors failed).
+        n_pdf_loader_skipped = n_pdf_total - len(pdf_docs)
+
+        # --- YouTube transcripts ---
+        youtube_ids_file = Path(args.youtube_ids)
+        if youtube_ids_file.exists():
+            from app.ingest.loader import _parse_youtube_ids  # private but same module
+            n_yt_total = len(_parse_youtube_ids(youtube_ids_file))
+            yt_docs = load_youtube_transcripts(youtube_ids_file)
+        else:
+            n_yt_total = 0
+            yt_docs = []
+        n_yt_ingested = 0
+        logger.info("Loaded %d YouTube transcripts from %s", len(yt_docs), args.youtube_ids)
+
+        for i, raw_doc in enumerate(yt_docs, start=1):
+            doc_id = upsert_document(conn, raw_doc)
+            chunks = chunk_document(raw_doc)
+            to_embed, to_skip = chunks_to_embed(
+                conn, doc_id, chunks, embedder.model
+            )
+            total_skipped += len(to_skip)
+            if to_embed:
+                result = embedder.embed_documents([c.text for c in to_embed])
+                upsert_chunks(
+                    conn,
+                    doc_id,
+                    to_embed,
+                    result.vectors,
+                    embedder.model,
+                    source_type=raw_doc.source_type,
+                )
+                total_inserted += len(to_embed)
+                n_yt_ingested += 1
+            conn.commit()
+            logger.info(
+                "[yt %d/%d] %s: +%d chunks, =%d skipped",
+                i,
+                len(yt_docs),
+                raw_doc.source_id,
+                len(to_embed),
+                len(to_skip),
+            )
+
+        n_yt_skipped = n_yt_total - len(yt_docs)
+
+        # --- Web articles ---
+        article_urls_file = Path(args.article_urls)
+        if article_urls_file.exists():
+            n_art_total = sum(
+                1
+                for line in article_urls_file.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            )
+            art_docs = load_web_articles(article_urls_file)
+        else:
+            n_art_total = 0
+            art_docs = []
+        n_art_ingested = 0
+        logger.info("Loaded %d web articles from %s", len(art_docs), args.article_urls)
+
+        for i, raw_doc in enumerate(art_docs, start=1):
+            doc_id = upsert_document(conn, raw_doc)
+            chunks = chunk_document(raw_doc)
+            to_embed, to_skip = chunks_to_embed(
+                conn, doc_id, chunks, embedder.model
+            )
+            total_skipped += len(to_skip)
+            if to_embed:
+                result = embedder.embed_documents([c.text for c in to_embed])
+                upsert_chunks(
+                    conn,
+                    doc_id,
+                    to_embed,
+                    result.vectors,
+                    embedder.model,
+                    source_type=raw_doc.source_type,
+                )
+                total_inserted += len(to_embed)
+                n_art_ingested += 1
+            conn.commit()
+            logger.info(
+                "[art %d/%d] %s: +%d chunks, =%d skipped",
+                i,
+                len(art_docs),
+                raw_doc.source_id,
+                len(to_embed),
+                len(to_skip),
+            )
+
+        n_art_skipped = n_art_total - len(art_docs)
+
+        # Aggregate document count across all source types for the audit row.
+        all_docs_count = len(raw_docs) + len(pdf_docs) + len(yt_docs) + len(art_docs)
         complete_run(
             conn,
             run_id=run_id,
-            n_documents=len(raw_docs),
+            n_documents=all_docs_count,
             n_chunks_inserted=total_inserted,
             n_chunks_skipped=total_skipped,
         )
         conn.commit()
         print(
             f"OK: {total_inserted} chunks inserted, "
-            f"{total_skipped} skipped across {len(raw_docs)} documents."
+            f"{total_skipped} skipped across {all_docs_count} documents."
         )
+        # D-07: per-source end-of-run summary lines (print, not logger.info,
+        # so they always appear in stdout regardless of log level).
+        print(f"PDFs: {n_pdf_ingested} of {n_pdf_total} ingested ({n_pdf_loader_skipped} skipped)")
+        print(f"Transcripts: {n_yt_ingested} of {n_yt_total} ingested ({n_yt_skipped} skipped)")
+        print(f"Articles: {n_art_ingested} of {n_art_total} ingested ({n_art_skipped} skipped)")
         return 0
     except Exception as e:
         # Main transaction is poisoned — roll it back so we can close cleanly.

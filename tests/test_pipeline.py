@@ -199,7 +199,57 @@ def test_failure_records_failed_run(db_conn, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# Test 5: Pipeline only uses the Embedder Protocol (no direct openai imports).
+# Test 5a: Pipeline imports all four loader functions (static, no DB).
+# ---------------------------------------------------------------------------
+
+
+def test_pipeline_imports_all_loaders():
+    """All three Phase-6 loader names must appear in pipeline.py source.
+
+    This is a static text check — no DB, no API key, no actual loading.
+    Guards against accidentally omitting one of the new loader imports.
+    """
+    pipeline_src = Path(__file__).resolve().parent.parent / "app" / "ingest" / "pipeline.py"
+    assert pipeline_src.exists()
+    contents = pipeline_src.read_text(encoding="utf-8")
+
+    assert "load_pdf_manuals" in contents, (
+        "pipeline.py must import load_pdf_manuals (Plan 06-02)"
+    )
+    assert "load_youtube_transcripts" in contents, (
+        "pipeline.py must import load_youtube_transcripts (Plan 06-03)"
+    )
+    assert "load_web_articles" in contents, (
+        "pipeline.py must import load_web_articles (Plan 06-04)"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Test 5b: --help output includes the three new CLI arguments (static).
+# ---------------------------------------------------------------------------
+
+
+def test_help_includes_new_args(capsys):
+    """The three new CLI arguments must appear in --help output.
+
+    Verifies that _build_parser() registered --manuals-dir, --youtube-ids,
+    and --article-urls.  No DB or API key required.
+    """
+    from app.ingest.pipeline import main
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--help"])
+    assert exc.value.code == 0
+
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert "--manuals-dir" in output, "--manuals-dir must appear in --help output"
+    assert "--youtube-ids" in output, "--youtube-ids must appear in --help output"
+    assert "--article-urls" in output, "--article-urls must appear in --help output"
+
+
+# ---------------------------------------------------------------------------
+# Test 6: Pipeline only uses the Embedder Protocol (no direct openai imports).
 # ---------------------------------------------------------------------------
 
 

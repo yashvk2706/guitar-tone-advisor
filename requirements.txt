@@ -15,6 +15,13 @@ openai==2.36.0
 tenacity==9.1.4
 tiktoken==0.12.0
 
+# Phase 6 ingestion dependencies — PDF manuals, YouTube transcripts, web articles.
+pymupdf4llm==0.0.25
+pypdf==5.9.0
+youtube-transcript-api==1.2.4
+yt-dlp
+trafilatura==2.0.0
+
 # Optional embedding backends — uncomment only when EMBEDDING_MODEL switches to them.
 # voyageai==0.3.7
 # sentence-transformers==5.5.0
