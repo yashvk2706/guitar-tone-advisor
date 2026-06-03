@@ -425,11 +425,12 @@ def _load_via_ytdlp(video_id: str) -> "RawDocument | None":
             out_tmpl = str(Path(tmpdir) / "%(id)s.%(ext)s")
             cmd = [
                 "yt-dlp",
+                "--cookies-from-browser", "chrome",  # bypasses YouTube IP block with authenticated session
                 "--write-auto-subs",
                 "--sub-lang", "en",
                 "--sub-format", "vtt",
                 "--skip-download",
-                "--js-runtimes", "nodejs",  # yt-dlp defaults to deno; use node if present
+                # --js-runtimes nodejs removed: "nodejs" is wrong value; yt-dlp[default] auto-detects runtime
                 f"https://www.youtube.com/watch?v={video_id}",
                 "-o", out_tmpl,
             ]
