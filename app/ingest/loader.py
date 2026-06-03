@@ -477,6 +477,34 @@ def _load_via_ytdlp(video_id: str) -> "RawDocument | None":
         return None
 
 
+def _build_cookie_session():  # type: ignore[return]
+    """Return a requests.Session loaded with Chrome cookies via yt-dlp.
+
+    Used to work around YouTube IP blocks on the primary transcript-API path.
+    Returns None silently if cookie extraction fails for any reason.
+    """
+    try:
+        import http.cookiejar
+        import tempfile
+
+        import requests as _requests
+        import yt_dlp
+
+        tmp = tempfile.NamedTemporaryFile(suffix=".txt", delete=False)
+        tmp.close()
+        opts: dict = {"cookiesfrombrowser": ("chrome",), "cookiefile": tmp.name, "quiet": True}
+        with yt_dlp.YoutubeDL(opts):
+            pass
+        jar = http.cookiejar.MozillaCookieJar(tmp.name)
+        jar.load(ignore_discard=True, ignore_expires=True)
+        session = _requests.Session()
+        session.cookies = jar  # type: ignore[assignment]
+        return session
+    except Exception as exc:
+        logger.debug("Cookie session build failed: %r — proceeding without cookies", exc)
+        return None
+
+
 def load_youtube_transcripts(ids_file: Path) -> list[RawDocument]:
     """Load YouTube transcripts for all video IDs in ``ids_file``.
 
@@ -499,7 +527,9 @@ def load_youtube_transcripts(ids_file: Path) -> list[RawDocument]:
         ``{"text": str, "start": float}`` dicts for the chunker to consume.
     """
     video_ids = _parse_youtube_ids(Path(ids_file))
-    api = YouTubeTranscriptApi()
+    # Export Chrome cookies so YouTubeTranscriptApi can bypass IP-based blocks.
+    cookie_session = _build_cookie_session()
+    api = YouTubeTranscriptApi(http_client=cookie_session) if cookie_session else YouTubeTranscriptApi()
     documents: list[RawDocument] = []
 
     for video_id in video_ids:
