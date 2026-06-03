@@ -14,3 +14,6 @@ node_modules/
 # Raw corpus caches — committed forum posts stay tracked; fetched HTML & transcripts do not.
 raw_data/web_html/
 raw_data/transcripts/
+
+# Local pg_dump artifact for Railway corpus transfer — contains full corpus text, never commit.
+corpus_dump.sql
