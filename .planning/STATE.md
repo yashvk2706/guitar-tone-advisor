@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: In Progress
-stopped_at: context exhaustion at 78% (2026-06-03)
+status: Complete
+stopped_at: all 7 phases complete (2026-06-11)
 last_updated: "2026-06-03T19:36:40.065Z"
 progress:
   total_phases: 7
@@ -32,7 +32,7 @@ See: .planning/PROJECT.md (updated 2026-05-15)
 | 4 | UI Polish — Knobs, Markdown, Follow-ups | Complete (4/4) |
 | 5 | Evaluation Harness & Grounding Quality | Complete (3/3 plans complete) |
 | 6 | Full Corpus Ingestion | Complete (5/5 plans) |
-| 7 | Persistent Corpus & Cloud Deployment | Ready to execute (3/3 plans) |
+| 7 | Persistent Corpus & Cloud Deployment | Complete (3/3 plans) |
 
 ## Active Context
 

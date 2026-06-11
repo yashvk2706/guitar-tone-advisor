@@ -13,8 +13,8 @@
 - [x] **Phase 3: Grounded Generation & Minimal Chat UI** — End-to-end SSE-streamed answers with inline `[S{n}]` citations rendered in a minimal Next.js chat
 - [x] **Phase 4: UI Polish — Knobs, Markdown, Follow-ups** — Add rotary-knob settings, Markdown rendering, follow-up buttons, copy-to-clipboard, loading states, session history
 - [x] **Phase 5: Evaluation Harness & Grounding Quality** — Score against the existing golden eval set (recall@K / MRR), empty-context refusal smoke test, RAGAS faithfulness
-- [ ] **Phase 6: Full Corpus Ingestion** — Extend the ingest pipeline to handle PDF manuals, YouTube transcripts, and web articles; run the full pipeline and verify eval scores improve
-- [ ] **Phase 7: Persistent Corpus & Cloud Deployment** — Confirm corpus persists without re-ingestion across Docker restarts; deploy app to AWS (EC2 + managed Postgres with pgvector) at a public HTTPS URL with pre-seeded corpus
+- [x] **Phase 6: Full Corpus Ingestion** — Extend the ingest pipeline to handle PDF manuals, YouTube transcripts, and web articles; run the full pipeline and verify eval scores improve
+- [x] **Phase 7: Persistent Corpus & Cloud Deployment** — Confirm corpus persists without re-ingestion across Docker restarts; deploy app to Railway + Vercel at public HTTPS URLs with pre-seeded corpus (completed 2026-06-11)
 
 ## Phase Details
 
@@ -155,9 +155,9 @@ Cross-cutting constraints:
 **Pre-deployment prerequisite:** Fix YouTube transcript ingestion (all 13 videos blocked by YouTube bot detection — `RequestBlocked()` on youtube-transcript-api; yt-dlp fallback needs browser cookies via `--cookies-from-browser chrome`). This must be resolved before deployment so the corpus includes YouTube data.
 **Plans:** 3 plans across 2 waves (Railway + Vercel deployment per CONTEXT.md D-01/D-02, overriding the AWS reference in the original goal)
 Plans:
-- [ ] 07-01-PLAN.md — yt-dlp YouTube fix (Chrome cookies + remove invalid --js-runtimes nodejs) and requirements.txt → yt-dlp[default] [W1; INGEST-10, PERSIST-01]
-- [ ] 07-02-PLAN.md — Deployment infra: Dockerfile (python:3.12-slim) + scripts/start.sh + env-driven next.config.js + corpus_dump.sql gitignore + RUNNING.md persistence warning [W1; DEPLOY-01, DEPLOY-03, DEPLOY-05, PERSIST-01]
-- [ ] 07-03-PLAN.md — Human deployment checkpoint: full pipeline run, Docker persistence verify, pg_dump → Railway pgvector restore, Railway backend deploy, Vercel frontend deploy, end-to-end smoke tests [W2; PERSIST-01, DEPLOY-02, DEPLOY-03, DEPLOY-04, DEPLOY-05]
+- [x] 07-01-PLAN.md — yt-dlp YouTube fix (Chrome cookies + remove invalid --js-runtimes nodejs) and requirements.txt → yt-dlp[default] [W1; INGEST-10, PERSIST-01]
+- [x] 07-02-PLAN.md — Deployment infra: Dockerfile (python:3.12-slim) + scripts/start.sh + env-driven next.config.js + corpus_dump.sql gitignore + RUNNING.md persistence warning [W1; DEPLOY-01, DEPLOY-03, DEPLOY-05, PERSIST-01]
+- [x] 07-03-PLAN.md — Human deployment checkpoint: full pipeline run, Docker persistence verify, pg_dump → Railway pgvector restore, Railway backend deploy, Vercel frontend deploy, end-to-end smoke tests [W2; PERSIST-01, DEPLOY-02, DEPLOY-03, DEPLOY-04, DEPLOY-05]
 
 ## Progress
 
