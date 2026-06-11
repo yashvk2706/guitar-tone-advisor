@@ -6,3 +6,5 @@
 {"timestamp": "2026-05-29T20:34:52.878144+00:00", "k": 8, "scope": "held_out", "recall_at_1": 0.8, "recall_at_5": 1.0, "recall_at_8": 1.0, "mrr": 0.9, "embedding_model": "text-embedding-3-small"}
 {"timestamp": "2026-06-02T16:06:13.606834+00:00", "k": 8, "scope": "held_out", "recall_at_1": 0.0, "recall_at_5": 0.0, "recall_at_8": 0.0, "mrr": 0.0, "embedding_model": "text-embedding-3-small"}
 {"timestamp": "2026-06-02T16:20:46.523995+00:00", "k": 8, "scope": "held_out", "recall_at_1": 0.8, "recall_at_5": 1.0, "recall_at_8": 1.0, "mrr": 0.9, "embedding_model": "text-embedding-3-small"}
+{"timestamp": "2026-06-04T02:13:40.728531+00:00", "k": 8, "scope": "held_out", "recall_at_1": 0.0, "recall_at_5": 0.0, "recall_at_8": 0.0, "mrr": 0.0, "embedding_model": "text-embedding-3-small"}
+{"timestamp": "2026-06-09T19:31:42.577001+00:00", "k": 8, "scope": "held_out", "recall_at_1": 0.6, "recall_at_5": 1.0, "recall_at_8": 1.0, "mrr": 0.7666666666666667, "embedding_model": "text-embedding-3-small"}

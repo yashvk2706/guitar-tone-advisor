@@ -257,7 +257,7 @@ def score_tuple_faithfulness(
     # Step 2: Extract claims — answer text goes ONLY into user-role message
     claim_resp = sync_client.messages.create(
         model=get_settings().anthropic_model,
-        max_tokens=512,
+        max_tokens=1024,
         system=CLAIM_EXTRACT_SYSTEM,
         messages=[
             {
@@ -270,29 +270,36 @@ def score_tuple_faithfulness(
     claim_text = claim_resp.content[0].text if claim_resp.content else ""
     claims = parse_claims(claim_text)
 
-    # Step 3: Check each claim — claim text goes ONLY into user-role message
-    chunk_texts = "\n---\n".join(c.text for c in chunks)
+    # Step 3: Check each claim against each chunk individually — a claim passes
+    # if ANY single chunk supports it. Concatenating all chunks into one wall of
+    # text caused the checker to consistently return false even for verbatim claims
+    # (mixed-topic context confuses attribution framing).
     supported_count = 0
     total_count = len(claims)
 
     for claim in claims:
-        support_resp = sync_client.messages.create(
-            model=get_settings().anthropic_model,
-            max_tokens=64,
-            system=CLAIM_SUPPORT_SYSTEM,
-            messages=[
-                {
-                    "role": "user",
-                    "content": CLAIM_SUPPORT_USER.format(
-                        claim=claim,
-                        chunk_texts=chunk_texts,
-                    ),
-                }
-            ],
-        )
-        # Guard: content may be empty on API refusal or safety block (CR-02 fix)
-        support_text = support_resp.content[0].text if support_resp.content else ""
-        if parse_support(support_text):
+        claim_supported = False
+        for chunk in chunks:
+            support_resp = sync_client.messages.create(
+                model=get_settings().anthropic_model,
+                max_tokens=64,
+                system=CLAIM_SUPPORT_SYSTEM,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": CLAIM_SUPPORT_USER.format(
+                            claim=claim,
+                            chunk_texts=chunk.text,
+                        ),
+                    }
+                ],
+            )
+            # Guard: content may be empty on API refusal or safety block (CR-02 fix)
+            support_text = support_resp.content[0].text if support_resp.content else ""
+            if parse_support(support_text):
+                claim_supported = True
+                break
+        if claim_supported:
             supported_count += 1
 
     return {

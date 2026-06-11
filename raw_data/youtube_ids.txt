@@ -9,7 +9,7 @@ TMPoBFXsWjg # 7 tones all guitar players chase
 Hrgs-SlSxQE # Dominic fike interview
 MSZzNl_0J3A # prince guitar tone
 IVGMSx-Tqhw # John frusciante
-1KzmG9Hb8PI # Slash gear guide
-TJTQID5J72A # Eddie Van Halen gear guide
+1KzmG9Hb8PI # Slash gear guide, missing in ingestion run
+TJTQID5J72A # Eddie Van Halen gear guide, missing in ingestion run
 
 
