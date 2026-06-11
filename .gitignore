@@ -10,6 +10,7 @@ node_modules/
 .pytest_cache/
 .ruff_cache/
 .venv/
+venv/
 
 # Raw corpus caches — committed forum posts stay tracked; fetched HTML & transcripts do not.
 raw_data/web_html/

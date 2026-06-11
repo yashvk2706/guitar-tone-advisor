@@ -492,14 +492,21 @@ def _build_cookie_session():  # type: ignore[return]
 
         tmp = tempfile.NamedTemporaryFile(suffix=".txt", delete=False)
         tmp.close()
-        opts: dict = {"cookiesfrombrowser": ("chrome",), "cookiefile": tmp.name, "quiet": True}
-        with yt_dlp.YoutubeDL(opts):
-            pass
-        jar = http.cookiejar.MozillaCookieJar(tmp.name)
-        jar.load(ignore_discard=True, ignore_expires=True)
-        session = _requests.Session()
-        session.cookies = jar  # type: ignore[assignment]
-        return session
+        try:
+            opts: dict = {"cookiesfrombrowser": ("chrome",), "cookiefile": tmp.name, "quiet": True}
+            with yt_dlp.YoutubeDL(opts):
+                pass
+            jar = http.cookiejar.MozillaCookieJar(tmp.name)
+            jar.load(ignore_discard=True, ignore_expires=True)
+            session = _requests.Session()
+            session.cookies = jar  # type: ignore[assignment]
+            return session
+        finally:
+            import os as _os
+            try:
+                _os.unlink(tmp.name)
+            except OSError:
+                pass
     except Exception as exc:
         logger.debug("Cookie session build failed: %r — proceeding without cookies", exc)
         return None
