@@ -18,7 +18,9 @@ Built-from-scratch RAG pipeline, measured on a 5-query held-out set:
 | MRR | **0.77** | Mean Reciprocal Rank — how high the relevant chunk ranks on average |
 | RAGAS Faithfulness | **0.66** | Fraction of answer claims that are directly supported by the retrieved source passages |
 
-The RAGAS score improved from ~0.03 (forum-only corpus, ~21 chunks) to 0.66 after expanding to 785 chunks across 4 source types (forum posts, PDF manuals, web articles, YouTube transcripts). The remaining gap is largely sparse corpus coverage on niche tones — more sources would push it higher.
+**On MRR:** 0.77 is acceptable for this system because in a RAG pipeline, all top-8 retrieved chunks are passed to the LLM regardless of their individual rank. Recall@8 = 1.0 is the metric that governs answer quality — it means the relevant source is always present in the generation context. MRR measures where it ranks within those 8, which matters more for pure search than for RAG. The drop from 0.9 (forum-only, 21 chunks) to 0.77 (full corpus, 785 chunks) is expected: more corpus means more competition for rank 1, but coverage improves.
+
+**On RAGAS:** Faithfulness improved from ~0.03 (forum-only corpus, ~21 chunks) to 0.66 after expanding to 785 chunks across 4 source types (forum posts, PDF manuals, web articles, YouTube transcripts). The remaining gap is largely sparse corpus coverage on niche tones — more sources would push it higher.
 
 ---
 
