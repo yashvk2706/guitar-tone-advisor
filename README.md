@@ -4,6 +4,22 @@ A personal conversational RAG app that answers "how do I sound like X?" question
 
 **No vague advice. No hallucinated gear. Every answer traces back to a real source.**
 
+**[Try it live → guitar-tone-advisor.vercel.app](https://guitar-tone-advisor.vercel.app)**
+
+---
+
+## Eval results
+
+Built-from-scratch RAG pipeline, measured on a 5-query held-out set:
+
+| Metric | Score | What it measures |
+|--------|-------|-----------------|
+| Recall@8 | **1.0** | The relevant chunk appears in the top 8 retrieved results for every held-out query |
+| MRR | **0.77** | Mean Reciprocal Rank — how high the relevant chunk ranks on average |
+| RAGAS Faithfulness | **0.66** | Fraction of answer claims that are directly supported by the retrieved source passages |
+
+The RAGAS score improved from ~0.03 (forum-only corpus, ~21 chunks) to 0.66 after expanding to 785 chunks across 4 source types (forum posts, PDF manuals, web articles, YouTube transcripts). The remaining gap is largely sparse corpus coverage on niche tones — more sources would push it higher.
+
 ---
 
 ## What it does
@@ -168,6 +184,6 @@ tests/          # pytest suite (offline + live-DB)
 
 ## Design constraints
 
-- **Single user, fully local** — no auth, no multi-tenancy, no cloud hosting
+- **Single user** — no auth, no multi-tenancy; deployed on Railway (backend) + Vercel (frontend)
 - **Citation grounding is mandatory** — responses that cannot cite a source passage are refused
 - **No framework abstractions** — this is a learning project; the RAG pipeline is built from scratch so the internals are visible
